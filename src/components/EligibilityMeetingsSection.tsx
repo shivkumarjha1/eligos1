@@ -59,6 +59,26 @@ const INITIAL_MEETINGS: EligibilityMeetingRecord[] = [
 export const EligibilityMeetingsSection: React.FC = () => {
   const { currentUser, selectedStudyId } = useAuth();
   const [meetings, setMeetings] = useState<EligibilityMeetingRecord[]>(INITIAL_MEETINGS);
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_eligibility_meetings");
+      if (saved) {
+        setMeetings(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load meetings from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_eligibility_meetings", JSON.stringify(meetings));
+    } catch (e) {
+      console.error("Failed to save meetings to localStorage", e);
+    }
+  }, [meetings]);
+
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState(false);
 

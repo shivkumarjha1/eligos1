@@ -31,6 +31,25 @@ const INITIAL_DEVIATIONS: Deviation[] = [
 export const DeviationsSection: React.FC = () => {
   const { currentUser } = useAuth();
   const [deviations, setDeviations] = useState<Deviation[]>(INITIAL_DEVIATIONS);
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_deviations");
+      if (saved) {
+        setDeviations(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load deviations from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_deviations", JSON.stringify(deviations));
+    } catch (e) {
+      console.error("Failed to save deviations to localStorage", e);
+    }
+  }, [deviations]);
   const [showModal, setShowModal] = useState(false);
 
   const [subjectId, setSubjectId] = useState("");

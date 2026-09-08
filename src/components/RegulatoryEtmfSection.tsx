@@ -248,6 +248,25 @@ export const RegulatoryEtmfSection: React.FC = () => {
   // Database of eTMF documents per study
   const [etmfDb, setEtmfDb] = useState<Record<string, EtmfDocument[]>>(INITIAL_ETMF_DOCUMENTS);
 
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_regulatory_etmf");
+      if (saved) {
+        setEtmfDb(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load eTMF db from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_regulatory_etmf", JSON.stringify(etmfDb));
+    } catch (e) {
+      console.error("Failed to save eTMF db to localStorage", e);
+    }
+  }, [etmfDb]);
+
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedZone, setSelectedZone] = useState("All Zones (1-9)");

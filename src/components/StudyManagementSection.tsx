@@ -90,6 +90,25 @@ export const StudyManagementSection: React.FC = () => {
   const { currentUser } = useAuth();
   
   const [studiesList, setStudiesList] = useState<ExtendedStudy[]>(INITIAL_MANAGEMENT_STUDIES);
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_management_studies");
+      if (saved) {
+        setStudiesList(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load studies from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_management_studies", JSON.stringify(studiesList));
+    } catch (e) {
+      console.error("Failed to save studies to localStorage", e);
+    }
+  }, [studiesList]);
   
   // Modal state (Screenshots 2 & 3)
   const [showModal, setShowModal] = useState(false);

@@ -110,8 +110,33 @@ const FAQ_DATABASE: FAQItem[] = [
 export const StudyFAQLogSection: React.FC = () => {
   const { selectedStudyId } = useAuth();
   
+  const [faqs, setFaqs] = useState<FAQItem[]>(FAQ_DATABASE);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const [formQuestion, setFormQuestion] = useState("");
+  const [formAnswer, setFormAnswer] = useState("");
+  const [formCategory, setFormCategory] = useState<FAQItem["category"]>("Eligibility & Protocol");
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_faq_log");
+      if (saved) {
+        setFaqs(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load FAQs from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_faq_log", JSON.stringify(faqs));
+    } catch (e) {
+      console.error("Failed to save FAQs to localStorage", e);
+    }
+  }, [faqs]);
 
   const categories = [
     "All",
@@ -121,8 +146,28 @@ export const StudyFAQLogSection: React.FC = () => {
     "Lab & Biomarkers",
   ];
 
+  const handleAddFaq = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formQuestion || !formAnswer) return;
+
+    const newFaq: FAQItem = {
+      id: `faq-${Date.now()}`,
+      studyId: selectedStudyId,
+      studyCode: selectedStudyId.split(" ")[0],
+      category: formCategory,
+      loggedDate: new Date().toISOString().slice(0, 10),
+      question: formQuestion,
+      answer: formAnswer,
+    };
+
+    setFaqs([newFaq, ...faqs]);
+    setShowAddModal(false);
+    setFormQuestion("");
+    setFormAnswer("");
+  };
+
   // Scoped strictly to the selected study in header dropdown
-  const studyScopedFaqs = FAQ_DATABASE.filter((item) => {
+  const studyScopedFaqs = faqs.filter((item) => {
     const studyMatches =
       selectedStudyId.toLowerCase().includes(item.studyCode.toLowerCase()) ||
       selectedStudyId.toLowerCase().includes(item.studyId.toLowerCase()) ||
@@ -131,7 +176,7 @@ export const StudyFAQLogSection: React.FC = () => {
   });
 
   // Apply search & category filter
-  const filteredFaqs = (studyScopedFaqs.length > 0 ? studyScopedFaqs : FAQ_DATABASE).filter((item) => {
+  const filteredFaqs = (studyScopedFaqs.length > 0 ? studyScopedFaqs : faqs).filter((item) => {
     const matchesSearch =
       item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -156,9 +201,16 @@ export const StudyFAQLogSection: React.FC = () => {
           </p>
         </div>
 
-        {/* Study Context Tag */}
-        <div className="bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-900">
-          Scoped Protocol: <span className="text-blue-600 font-extrabold">{selectedStudyId}</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+          >
+            + Add FAQ / Log Query
+          </button>
+          <div className="bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-900">
+            Scoped Protocol: <span className="text-blue-600 font-extrabold">{selectedStudyId}</span>
+          </div>
         </div>
       </div>
 
@@ -236,6 +288,71 @@ export const StudyFAQLogSection: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-100 font-sans">
+            <h3 className="font-bold text-lg text-slate-900 border-b border-slate-100 pb-3">
+              Add New Study FAQ / Query Guidance
+            </h3>
+            <form onSubmit={handleAddFaq} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Category</label>
+                <select
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value as any)}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl bg-white font-semibold max-w-full"
+                >
+                  <option value="Eligibility & Protocol">Eligibility & Protocol</option>
+                  <option value="Safety & EKG">Safety & EKG</option>
+                  <option value="Investigational Product (IP)">Investigational Product (IP)</option>
+                  <option value="Lab & Biomarkers">Lab & Biomarkers</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Question / Query Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={formQuestion}
+                  onChange={(e) => setFormQuestion(e.target.value)}
+                  placeholder="e.g. What is the baseline lab requirement?"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl font-medium max-w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Answer / Guidance *</label>
+                <textarea
+                  rows={4}
+                  required
+                  value={formAnswer}
+                  onChange={(e) => setFormAnswer(e.target.value)}
+                  placeholder="Provide protocol guidance..."
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl font-medium max-w-full"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs"
+                >
+                  Save FAQ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -173,6 +173,26 @@ export const StudyCommunicationsSection: React.FC = () => {
   const { currentUser, selectedStudyId, studySummaries } = useAuth();
 
   const [threads, setThreads] = useState<CommunicationThread[]>(INITIAL_THREADS);
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_study_communications");
+      if (saved) {
+        setThreads(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load communications from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_study_communications", JSON.stringify(threads));
+    } catch (e) {
+      console.error("Failed to save communications to localStorage", e);
+    }
+  }, [threads]);
+
   const [activeFolder, setActiveFolder] = useState<CommFolder>("inbox");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>("comm-001");
   const [searchQuery, setSearchQuery] = useState("");

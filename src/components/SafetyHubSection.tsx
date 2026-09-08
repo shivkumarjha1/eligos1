@@ -295,6 +295,56 @@ export const SafetyHubSection: React.FC = () => {
   // Discontinuation Triggers
   const [triggers, setTriggers] = useState<DiscontinuationTrigger[]>(INITIAL_TRIGGERS);
 
+  React.useEffect(() => {
+    try {
+      const savedAe = localStorage.getItem("eligos_safety_ae_db");
+      if (savedAe) setAeDb(JSON.parse(savedAe));
+
+      const savedDev = localStorage.getItem("eligos_safety_deviations");
+      if (savedDev) setDeviations(JSON.parse(savedDev));
+
+      const savedSch = localStorage.getItem("eligos_safety_schedule");
+      if (savedSch) setScheduleRows(JSON.parse(savedSch));
+
+      const savedTrig = localStorage.getItem("eligos_safety_triggers");
+      if (savedTrig) setTriggers(JSON.parse(savedTrig));
+    } catch (e) {
+      console.error("Failed to load safety hub state from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_safety_ae_db", JSON.stringify(aeDb));
+    } catch (e) {
+      console.error("Failed to save AE db to localStorage", e);
+    }
+  }, [aeDb]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_safety_deviations", JSON.stringify(deviations));
+    } catch (e) {
+      console.error("Failed to save safety deviations to localStorage", e);
+    }
+  }, [deviations]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_safety_schedule", JSON.stringify(scheduleRows));
+    } catch (e) {
+      console.error("Failed to save safety schedule to localStorage", e);
+    }
+  }, [scheduleRows]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_safety_triggers", JSON.stringify(triggers));
+    } catch (e) {
+      console.error("Failed to save safety triggers to localStorage", e);
+    }
+  }, [triggers]);
+
   // Modals State
   const [showAeModal, setShowAeModal] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);

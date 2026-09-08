@@ -105,6 +105,25 @@ export const EdcEcrfSection: React.FC = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState("100-101SLT");
   const [visits, setVisits] = useState<VisitLogItem[]>(INITIAL_VISITS);
 
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_edc_visits");
+      if (saved) {
+        setVisits(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load eCRF visits from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_edc_visits", JSON.stringify(visits));
+    } catch (e) {
+      console.error("Failed to save eCRF visits to localStorage", e);
+    }
+  }, [visits]);
+
   const activeSubjectInfo = SAMPLE_SUBJECT_MAP[selectedSubjectId] || {
     studyId: selectedStudyId,
     studyTitle: selectedStudyId,

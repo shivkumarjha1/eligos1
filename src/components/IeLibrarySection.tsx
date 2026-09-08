@@ -259,6 +259,25 @@ export const IeLibrarySection: React.FC = () => {
   // Database of criteria
   const [criteriaDb, setCriteriaDb] = useState<Record<string, Criterion[]>>(INITIAL_CRITERIA_DATABASE);
 
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_ie_criteria");
+      if (saved) {
+        setCriteriaDb(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load I/E criteria from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_ie_criteria", JSON.stringify(criteriaDb));
+    } catch (e) {
+      console.error("Failed to save I/E criteria to localStorage", e);
+    }
+  }, [criteriaDb]);
+
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<"All" | "Inclusion" | "Exclusion">("All");

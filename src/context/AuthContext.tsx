@@ -151,6 +151,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedStudyId, setSelectedStudyId] = useState<string>("SLT-206-C118");
   const [loading, setLoading] = useState(false);
 
+  // Load state from localStorage on initial render
+  React.useEffect(() => {
+    try {
+      const savedUsers = localStorage.getItem("eligos_users");
+      if (savedUsers) {
+        setUsers(JSON.parse(savedUsers));
+      }
+      const savedCurrentUser = localStorage.getItem("eligos_current_user");
+      if (savedCurrentUser) {
+        setCurrentUser(JSON.parse(savedCurrentUser));
+      }
+      const savedStudy = localStorage.getItem("eligos_selected_study");
+      if (savedStudy) {
+        setSelectedStudyId(savedStudy);
+      }
+    } catch (e) {
+      console.error("Failed to load auth state from localStorage", e);
+    }
+  }, []);
+
+  // Sync users to localStorage
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_users", JSON.stringify(users));
+    } catch (e) {
+      console.error("Failed to save users to localStorage", e);
+    }
+  }, [users]);
+
+  // Sync currentUser to localStorage
+  React.useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem("eligos_current_user", JSON.stringify(currentUser));
+      }
+    } catch (e) {
+      console.error("Failed to save current user to localStorage", e);
+    }
+  }, [currentUser]);
+
+  // Sync selectedStudyId to localStorage
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_selected_study", selectedStudyId);
+    } catch (e) {
+      console.error("Failed to save selected study to localStorage", e);
+    }
+  }, [selectedStudyId]);
+
   const switchRole = (role: UserRole) => {
     if (role === "PI") setCurrentUser(PI_USER);
     else if (role === "CRO") setCurrentUser(CRO_USER);

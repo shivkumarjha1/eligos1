@@ -107,6 +107,25 @@ export const DocumentVaultSection: React.FC = () => {
   const { selectedStudyId, setSelectedStudyId, studySummaries, currentUser } = useAuth();
   
   const [documents, setDocuments] = useState<VaultDocument[]>(INITIAL_VAULT_DOCUMENTS);
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_document_vault");
+      if (saved) {
+        setDocuments(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load documents from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_document_vault", JSON.stringify(documents));
+    } catch (e) {
+      console.error("Failed to save documents to localStorage", e);
+    }
+  }, [documents]);
   const [selectedStudyFilter, setSelectedStudyFilter] = useState("All Assigned Studies");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [searchQuery, setSearchQuery] = useState("");

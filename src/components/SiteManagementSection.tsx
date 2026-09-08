@@ -167,6 +167,25 @@ export const SiteManagementSection: React.FC = () => {
   // Database of sites per study protocol
   const [sitesDatabase, setSitesDatabase] = useState<Record<string, SiteRecord[]>>(INITIAL_SITES_DATABASE);
 
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_site_management");
+      if (saved) {
+        setSitesDatabase(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load sites database from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_site_management", JSON.stringify(sitesDatabase));
+    } catch (e) {
+      console.error("Failed to save sites database to localStorage", e);
+    }
+  }, [sitesDatabase]);
+
   // Single Add / Edit Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<SiteRecord | null>(null);

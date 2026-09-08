@@ -185,6 +185,25 @@ export const AuditTrailSection: React.FC = () => {
   // Audit Database
   const [auditDb, setAuditDb] = useState<Record<string, AuditLogEntry[]>>(INITIAL_AUDIT_LOGS);
 
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("eligos_audit_trail");
+      if (saved) {
+        setAuditDb(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load audit trail from localStorage", e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("eligos_audit_trail", JSON.stringify(auditDb));
+    } catch (e) {
+      console.error("Failed to save audit trail to localStorage", e);
+    }
+  }, [auditDb]);
+
   // Search input
   const [searchQuery, setSearchQuery] = useState("");
 
