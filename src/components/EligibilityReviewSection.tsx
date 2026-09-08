@@ -14,15 +14,76 @@ import {
   Check, 
   UserCheck, 
   Building2, 
-  Stethoscope 
+  Stethoscope,
+  Printer,
+  RotateCcw,
+  AlertTriangle,
+  FileCheck,
+  Brain,
+  Upload,
+  Search,
+  Lock,
+  Trash2,
+  Download,
+  Sparkles,
+  ChevronRight,
+  ShieldCheck,
+  UserPlus
 } from "lucide-react";
+
+const PROTOCOL_CRITERIA_DATABASE: Record<string, CriterionCheck[]> = {
+  "MHT-2101-C01": [
+    { id: "inc1", code: "INC 01", description: "Age 18 to 65 years at time of screening consent", type: "Inclusion", met: true },
+    { id: "inc2", code: "INC 02", description: "Confirmed genetic diagnosis of VKCM via CLIA laboratory", type: "Inclusion", met: true },
+    { id: "inc3", code: "INC 03", description: "Willing and able to comply with scheduled visits, treatment plan, and lab tests", type: "Inclusion", met: true },
+    { id: "exc1", code: "EXC 01", description: "AST or ALT > 3.0x Upper Limit of Normal (ULN)", type: "Exclusion", met: false },
+    { id: "exc2", code: "EXC 02", description: "Prior exposure to gene therapy vector APO-lorparvovec", type: "Exclusion", met: false },
+    { id: "exc3", code: "EXC 03", description: "Current or recent hepatic impairment or acute liver injury", type: "Exclusion", met: false },
+  ],
+  "SLT-206-C118": [
+    { id: "inc1", code: "INC 01", description: "Diagnosis of Bipolar I or II Disorder (ICD-10 F31.9) per DSM-5 criteria", type: "Inclusion", met: true },
+    { id: "inc2", code: "INC 02", description: "Baseline MADRS score ≥ 24 at screening evaluation", type: "Inclusion", met: true },
+    { id: "inc3", code: "INC 03", description: "Stable doses of psychotropic medications for a minimum of 3 months prior to screening", type: "Inclusion", met: true },
+    { id: "exc1", code: "EXC 01", description: "Significant suicidal ideation or behavior (C-SSRS Grade 4 or 5) within past 3 months", type: "Exclusion", met: false },
+    { id: "exc2", code: "EXC 02", description: "Current treatment with strong CYP2D6 inhibitors or contraindicated psychotropics", type: "Exclusion", met: false },
+  ],
+  "ZP-010-BS01": [
+    { id: "inc1", code: "INC 01", description: "Clinical diagnosis of Tardive Dyskinesia (TD) for at least 3 months", type: "Inclusion", met: true },
+    { id: "inc2", code: "INC 02", description: "Eligible to receive VMAT2 inhibitor according to product labeling", type: "Inclusion", met: true },
+    { id: "exc1", code: "EXC 01", description: "Treatment with botulinum toxin within past 3 months", type: "Exclusion", met: false },
+  ],
+};
+
+interface StudySubjectOption {
+  subjectId: string;
+  studyId: string;
+  ageSex: string;
+  site: string;
+  status: string;
+}
+
+const STUDY_SUBJECTS_REGISTRY: Record<string, StudySubjectOption[]> = {
+  "MHT-2101-C01": [
+    { subjectId: "100-101MHT", studyId: "MHT-2101-C01", ageSex: "35/F", site: "HomeSite", status: "ELIGIBLE" },
+    { subjectId: "101-002", studyId: "MHT-2101-C01", ageSex: "42/F", site: "Apex Research", status: "IN REVIEW" },
+    { subjectId: "101-005", studyId: "MHT-2101-C01", ageSex: "36/M", site: "Mount Sinai Site 102", status: "APPROVED" },
+  ],
+  "SLT-206-C118": [
+    { subjectId: "101-002", studyId: "SLT-206-C118", ageSex: "42/F", site: "Johns Hopkins Site 101", status: "RANDOMIZED" },
+    { subjectId: "101-005", studyId: "SLT-206-C118", ageSex: "36/M", site: "Mount Sinai Site 102", status: "IN REVIEW" },
+  ],
+  "ZP-010-BS01": [
+    { subjectId: "ZP-201", studyId: "ZP-010-BS01", ageSex: "29/M", site: "Mayo Clinic Site 103", status: "SCREENED" },
+    { subjectId: "ZP-204", studyId: "ZP-010-BS01", ageSex: "48/F", site: "Apex Research", status: "PENDING REVIEW" },
+  ],
+};
 
 const SAMPLE_REVIEWS: EligibilityReview[] = [
   {
     id: "REV-2026-001",
     studyId: "MHT-2101-C01",
     subjectId: "101-002",
-    siteId: "Johns Hopkins Site 101",
+    siteId: "Apex Research (Boston)",
     submittedByUid: "pi_user",
     submittedByEmail: "pi.vance@apex-trials.org",
     submittedByName: "Dr. Elena Vance",
@@ -40,13 +101,8 @@ const SAMPLE_REVIEWS: EligibilityReview[] = [
       at: "2026-09-03 09:10",
       comments: "Lab source documents verified against protocol requirements.",
     },
-    criteria: [
-      { id: "inc1", code: "INC 01", description: "Age 18 to 65 years at time of screening consent", type: "Inclusion", met: true },
-      { id: "inc2", code: "INC 02", description: "Confirmed genetic diagnosis of VKCM via CLIA laboratory", type: "Inclusion", met: true },
-      { id: "exc1", code: "EXC 01", description: "AST or ALT > 3.0x Upper Limit of Normal (ULN)", type: "Exclusion", met: false },
-      { id: "exc2", code: "EXC 02", description: "Prior exposure to gene therapy vector APO-lorparvovec", type: "Exclusion", met: false },
-    ],
-    overallComments: "Subject ready for final Sponsor eligibility sign-off.",
+    criteria: PROTOCOL_CRITERIA_DATABASE["MHT-2101-C01"],
+    overallComments: "Subject meets all protocol requirements. Ready for final Sponsor sign-off.",
   },
   {
     id: "REV-2026-002",
@@ -74,34 +130,120 @@ const SAMPLE_REVIEWS: EligibilityReview[] = [
       at: "2026-09-06 16:40",
       comments: "Approved for enrollment & IP kit dispatch.",
     },
-    criteria: [
-      { id: "inc1", code: "INC 01", description: "Age 18 to 65 years at time of screening consent", type: "Inclusion", met: true },
-      { id: "exc1", code: "EXC 01", description: "AST or ALT > 3.0x Upper Limit of Normal (ULN)", type: "Exclusion", met: false },
-    ],
+    criteria: PROTOCOL_CRITERIA_DATABASE["MHT-2101-C01"],
+    overallComments: "Approved for Phase III enrollment.",
   },
 ];
 
+interface MedicalMonitorWriteup {
+  subjectId: string;
+  studyId: string;
+  indication: string;
+  compiledAt: string;
+  compiledBy: string;
+  overallStatus: "APPROVED" | "SCREEN FAIL" | "PENDING REVIEW";
+  parameters: Array<{
+    name: string;
+    patientValue: string;
+    targetRequirement: string;
+    status: "PASSED" | "VIOLATION";
+  }>;
+  narrative: string;
+}
+
 export const EligibilityReviewSection: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, selectedStudyId } = useAuth();
+  
+  // Role checks
+  const role = currentUser?.role || "PI";
+  const isPI = role === "PI";
+  const isCRO = role === "CRO";
+  const isSponsor = role === "Sponsor";
+  const isAdmin = role === "Admin" || role === "SuperAdmin";
+  const canAccessMedicalBoard = isCRO || isSponsor || isAdmin;
+  const canLoadSubject = isPI || isAdmin; // PI and Admin can load subjects. CRO/Sponsor cannot.
+
+  // Active cascaded study and subject state
+  const [activeStudyId, setActiveStudyId] = useState<string>(selectedStudyId || "MHT-2101-C01");
+  const [activeSubjectId, setActiveSubjectId] = useState<string>("");
+
+  // Subjects Registry State (allows PI & Admin to register new ones dynamically)
+  const [subjectsRegistry, setSubjectsRegistry] = useState(STUDY_SUBJECTS_REGISTRY);
+
+  // View Mode: 'checklist' for PI, default 'medical_board' for CRO/Sponsor/Admin
+  const [viewMode, setViewMode] = useState<"checklist" | "medical_board">(
+    canAccessMedicalBoard ? "medical_board" : "checklist"
+  );
+
+  // PI Checklist State
   const [reviews, setReviews] = useState<EligibilityReview[]>(SAMPLE_REVIEWS);
   const [selectedReview, setSelectedReview] = useState<EligibilityReview | null>(SAMPLE_REVIEWS[0]);
-  const [showNewModal, setShowNewModal] = useState(false);
 
-  // Form state for new review
-  const [subjectId, setSubjectId] = useState("");
-  const [siteId, setSiteId] = useState("Johns Hopkins Site 101");
-  const [incAge, setIncAge] = useState(true);
-  const [incGenetic, setIncGenetic] = useState(true);
-  const [excAst, setExcAst] = useState(false);
-  const [notes, setNotes] = useState("");
+  // Modal states for Interactive Evaluation Wizard
+  const [showEvalModal, setShowEvalModal] = useState(false);
+  const [modalSubjectId, setModalSubjectId] = useState("");
+  const [modalSiteId, setModalSiteId] = useState("Apex Research (Boston)");
+  const [modalStudyId, setModalStudyId] = useState("MHT-2101-C01");
+  const [evalCriteria, setEvalCriteria] = useState<CriterionCheck[]>(
+    PROTOCOL_CRITERIA_DATABASE["MHT-2101-C01"]
+  );
+  const [medicalNotes, setMedicalNotes] = useState("");
 
-  const role = currentUser?.role || "PI";
-  const canPIApprove = role === "PI" || role === "SuperAdmin" || role === "Admin";
-  const canCROApprove = role === "CRO" || role === "SuperAdmin" || role === "Admin";
-  const canSponsorApprove = role === "Sponsor" || role === "SuperAdmin" || role === "Admin";
+  // CRO & Sponsor Medical Monitor Board State
+  const [boardSearch, setBoardSearch] = useState("");
+  const [selectedBoardFilter, setSelectedBoardFilter] = useState<"ALL" | "SCREENING" | "PENDING" | "APPROVED" | "SCREEN_FAIL">("ALL");
+  const [stagedFiles, setStagedFiles] = useState<Array<{ name: string; size: string }>>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [compiledWriteup, setCompiledWriteup] = useState<MedicalMonitorWriteup | null>(null);
+
+  const canPIApprove = isPI || isAdmin;
+  const canCROApprove = isCRO || isAdmin;
+  const canSponsorApprove = isSponsor || isAdmin;
+
+  // Filter available subjects based on active study selector
+  const availableSubjects = subjectsRegistry[activeStudyId] || [];
+
+  // Active subject object metadata
+  const selectedSubjectMeta = availableSubjects.find((s) => s.subjectId === activeSubjectId);
+
+  // Filter reviews by selected study & subject
+  const studyReviews = reviews.filter(
+    (r) => (r.studyId === activeStudyId || activeStudyId.includes(r.studyId)) &&
+           (!activeSubjectId || r.subjectId === activeSubjectId)
+  );
+
+  // Handle Study Selection Change
+  const handleStudyChange = (studyId: string) => {
+    setActiveStudyId(studyId);
+    setActiveSubjectId(""); // Reset subject selection mandatory context
+    setCompiledWriteup(null);
+  };
+
+  // Toggle criterion value in evaluation modal
+  const handleToggleCriterion = (id: string, val: boolean) => {
+    setEvalCriteria((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, met: val } : c))
+    );
+  };
+
+  // Calculate live eligibility
+  const calculateEligibility = (criteriaList: CriterionCheck[]) => {
+    const failedInclusions = criteriaList.filter((c) => c.type === "Inclusion" && !c.met);
+    const failedExclusions = criteriaList.filter((c) => c.type === "Exclusion" && c.met);
+    const isEligible = failedInclusions.length === 0 && failedExclusions.length === 0;
+
+    return {
+      isEligible,
+      failedInclusions,
+      failedExclusions,
+      failedCount: failedInclusions.length + failedExclusions.length,
+    };
+  };
+
+  const currentEvalResult = calculateEligibility(evalCriteria);
 
   const handleApproveStage = (reviewId: string, stage: "pi" | "cro" | "sponsor") => {
-    const timestamp = new Date().toLocaleString();
+    const timestamp = new Date().toISOString().slice(0, 16).replace("T", " ");
     const userName = `${currentUser?.first} ${currentUser?.last}`;
 
     setReviews((prev) =>
@@ -109,11 +251,11 @@ export const EligibilityReviewSection: React.FC = () => {
         if (r.id !== reviewId) return r;
         const updated = { ...r };
         if (stage === "pi") {
-          updated.piApproval = { approved: true, by: userName, at: timestamp };
+          updated.piApproval = { approved: true, by: `${userName} (PI)`, at: timestamp };
         } else if (stage === "cro") {
-          updated.croApproval = { approved: true, by: userName, at: timestamp };
+          updated.croApproval = { approved: true, by: `${userName} (CRO)`, at: timestamp };
         } else if (stage === "sponsor") {
-          updated.sponsorApproval = { approved: true, by: userName, at: timestamp };
+          updated.sponsorApproval = { approved: true, by: `${userName} (Sponsor)`, at: timestamp };
           updated.status = "Approved";
         }
         return updated;
@@ -125,11 +267,11 @@ export const EligibilityReviewSection: React.FC = () => {
         if (!prev) return null;
         const updated = { ...prev };
         if (stage === "pi") {
-          updated.piApproval = { approved: true, by: userName, at: timestamp };
+          updated.piApproval = { approved: true, by: `${userName} (PI)`, at: timestamp };
         } else if (stage === "cro") {
-          updated.croApproval = { approved: true, by: userName, at: timestamp };
+          updated.croApproval = { approved: true, by: `${userName} (CRO)`, at: timestamp };
         } else if (stage === "sponsor") {
-          updated.sponsorApproval = { approved: true, by: userName, at: timestamp };
+          updated.sponsorApproval = { approved: true, by: `${userName} (Sponsor)`, at: timestamp };
           updated.status = "Approved";
         }
         return updated;
@@ -137,389 +279,1106 @@ export const EligibilityReviewSection: React.FC = () => {
     }
   };
 
-  const handleCreateReview = (e: React.FormEvent) => {
+  // PI & Admin Subject Registration Handler
+  const handleCreateReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subjectId) return;
+    if (!modalSubjectId) return;
 
-    // GCP Subject Uniqueness Check: ensure subject ID is unique to this study protocol
-    const exists = reviews.some((r) => r.subjectId.toLowerCase() === subjectId.toLowerCase());
+    // Check if subject already exists
+    const exists = availableSubjects.some((s) => s.subjectId.toLowerCase() === modalSubjectId.toLowerCase());
     if (exists) {
-      alert("GCP Constraint Alert: Subject ID already registered under this study protocol. Subject IDs cannot be duplicated or migrated.");
+      alert(`GCP Alert: Subject ID ${modalSubjectId} is already registered under study ${modalStudyId}.`);
       return;
     }
 
+    const newSub: StudySubjectOption = {
+      subjectId: modalSubjectId,
+      studyId: modalStudyId,
+      ageSex: "35/F",
+      site: modalSiteId,
+      status: "IN REVIEW",
+    };
+
+    // Update Registry
+    setSubjectsRegistry((prev) => ({
+      ...prev,
+      [modalStudyId]: [newSub, ...(prev[modalStudyId] || [])],
+    }));
+
+    const result = calculateEligibility(evalCriteria);
+
     const newRev: EligibilityReview = {
       id: `REV-${Date.now().toString().slice(-4)}`,
-      studyId: "MHT-2101-C01",
-      subjectId,
-      siteId,
+      studyId: modalStudyId,
+      subjectId: modalSubjectId,
+      siteId: modalSiteId,
       submittedByUid: currentUser?.uid || "user",
-      submittedByEmail: currentUser?.email || "user@site.org",
+      submittedByEmail: currentUser?.email || "pi.vance@apex-trials.org",
       submittedByName: `${currentUser?.first} ${currentUser?.last}`,
       submittedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-      status: "In Review",
+      status: result.isEligible ? "In Review" : "Rejected",
       piApproval: {
-        approved: true,
+        approved: result.isEligible,
         by: `${currentUser?.first} ${currentUser?.last} (PI)`,
         at: new Date().toISOString().slice(0, 16).replace("T", " "),
+        comments: result.isEligible ? "PI verified all I/E criteria." : "PI noted ineligible criteria.",
       },
-      criteria: [
-        { id: "inc1", code: "INC 01", description: "Age 18 to 65 years at time of screening consent", type: "Inclusion", met: incAge },
-        { id: "inc2", code: "INC 02", description: "Confirmed genetic diagnosis of VKCM via CLIA laboratory", type: "Inclusion", met: incGenetic },
-        { id: "exc1", code: "EXC 01", description: "AST or ALT > 3.0x Upper Limit of Normal (ULN)", type: "Exclusion", met: excAst },
-      ],
-      overallComments: notes,
+      criteria: evalCriteria,
+      overallComments: medicalNotes || (result.isEligible ? "Subject meets all primary inclusion/exclusion criteria." : "Subject failed eligibility check."),
     };
 
     setReviews([newRev, ...reviews]);
     setSelectedReview(newRev);
-    setShowNewModal(false);
-    setSubjectId("");
-    setNotes("");
+    setActiveStudyId(modalStudyId);
+    setActiveSubjectId(modalSubjectId);
+    setShowEvalModal(false);
+
+    setModalSubjectId("");
+    setMedicalNotes("");
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Top Banner & Action */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <ClipboardCheck className="w-5 h-5 text-blue-600" />
-            Eligibility Reviews & Multi-Stage Approvals
-          </h2>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Tri-party Sign-off Engine: PI Submission ➔ CRO Verification ➔ Sponsor Final Sign-off
-          </p>
-        </div>
-        <button
-          onClick={() => setShowNewModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-sm transition"
-        >
-          <Plus className="w-4 h-4" /> Submit Subject Review
-        </button>
-      </div>
+  const handlePrintSummary = () => {
+    window.print();
+  };
 
-      {/* Main Grid: List + Detail View */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Review List */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-xs p-4 space-y-3">
-          <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-2">
-            Subject Review Queue ({reviews.length})
+  // CRO/Sponsor Medical Monitor Handlers
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!activeSubjectId) {
+      alert("Mandatory Context Action: Please select a Subject from the header dropdown before uploading source documents.");
+      return;
+    }
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files).map((f) => ({
+        name: f.name,
+        size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
+      }));
+      setStagedFiles([...stagedFiles, ...newFiles]);
+    }
+  };
+
+  const handleRunEligibilityReview = () => {
+    if (!activeSubjectId) {
+      alert("Mandatory Subject Context: No eligibility review can be performed without selecting a Subject. Please select a Subject in Study above.");
+      return;
+    }
+    if (stagedFiles.length === 0) {
+      alert("Please upload or stage at least one patient source document (PDF, DOCX, image, TXT) to run Medical Monitor eligibility review.");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setTimeout(() => {
+      setIsAnalyzing(false);
+      const userName = `${currentUser?.first} ${currentUser?.last} (${currentUser?.role})`;
+
+      setCompiledWriteup({
+        subjectId: activeSubjectId,
+        studyId: activeStudyId,
+        indication: activeStudyId.includes("MHT")
+          ? "Voss-Kellerman Congenital Myopathy (VKCM)"
+          : activeStudyId.includes("SLT")
+          ? "Bipolar I Disorder (ICD-10 F31.9)"
+          : "Bipolar Depression",
+        compiledAt: new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+        compiledBy: userName,
+        overallStatus: "APPROVED",
+        parameters: [
+          { name: "MADRS Total Score", patientValue: "26.0 (Screening)", targetRequirement: "≥ 20.0 Baseline", status: "PASSED" },
+          { name: "Thyroid Stimulating Hormone (TSH)", patientValue: "1.15 x ULN", targetRequirement: "0.85 – 1.5x ULN", status: "PASSED" },
+          { name: "Hepatic ALT / AST Ratio", patientValue: "1.42 x ULN", targetRequirement: "< 3.0x ULN", status: "PASSED" },
+          { name: "QTcF Interval (Electrocardiogram)", patientValue: "418 ms", targetRequirement: "< 450ms (M) / 470ms (F)", status: "PASSED" },
+          { name: "C-SSRS Suicidal Ideation Grade", patientValue: "Grade 0 (Absent)", targetRequirement: "Grade < 4", status: "PASSED" },
+        ],
+        narrative: `Automated Medical Monitor Compliance Audit: Patient file logs for Subject ${activeSubjectId} parsed cleanly. All key clinical trial metrics (MADRS, TSH, ALT/AST, QTcF) conform to protocol thresholds with zero exclusion flags. Source lab records validated against 21 CFR Part 11 requirements. Recommended for final trial approval.`,
+      });
+    }, 1200);
+  };
+
+  const activeIndication = activeStudyId.includes("MHT")
+    ? "Voss-Kellerman Congenital Myopathy (VKCM)"
+    : activeStudyId.includes("SLT")
+    ? "Bipolar I Disorder (ICD-10 F31.9)"
+    : "Bipolar Depression";
+
+  return (
+    <div className="space-y-6 font-sans text-slate-800">
+      {/* 1. TOP CASCADED STUDY & SUBJECT SELECTOR BAR */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-[#1D64EC] flex items-center justify-center font-black">
+              <Brain className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-base font-black text-slate-900">Clinical Trial Eligibility Portal</h1>
+              <p className="text-xs text-slate-500 font-medium">
+                Active User: <strong className="text-slate-800">{currentUser?.first} {currentUser?.last}</strong> • Role: <strong className="text-[#1D64EC] font-extrabold">{currentUser?.role}</strong>
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            {reviews.map((rev) => {
-              const isSelected = selectedReview?.id === rev.id;
-              return (
-                <div
-                  key={rev.id}
-                  onClick={() => setSelectedReview(rev)}
-                  className={`p-3.5 rounded-xl border transition cursor-pointer ${
-                    isSelected
-                      ? "border-blue-500 bg-blue-50/60 shadow-xs"
-                      : "border-gray-200 bg-white hover:border-gray-300"
+          {/* Mode Switcher for CRO / Sponsor / Admin */}
+          <div className="flex items-center gap-3">
+            {canAccessMedicalBoard ? (
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button
+                  onClick={() => setViewMode("medical_board")}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-black text-xs transition ${
+                    viewMode === "medical_board"
+                      ? "bg-[#1D64EC] text-white shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-sm text-gray-900">Subject {rev.subjectId}</span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        rev.status === "Approved"
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                          : "bg-amber-100 text-amber-800 border border-amber-200"
-                      }`}
-                    >
-                      {rev.status}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500">{rev.siteId}</div>
-                  <div className="text-[11px] text-gray-400 mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
-                    <span>Protocol: {rev.studyId}</span>
-                    <span>{rev.submittedAt}</span>
-                  </div>
-                </div>
-              );
-            })}
+                  <Brain className="w-4 h-4" /> Medical Monitor Board (CRO/Sponsor)
+                </button>
+
+                <button
+                  onClick={() => setViewMode("checklist")}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-black text-xs transition ${
+                    viewMode === "checklist"
+                      ? "bg-[#1D64EC] text-white shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <ClipboardCheck className="w-4 h-4" /> PI Checklist Matrix
+                </button>
+              </div>
+            ) : (
+              <div className="text-xs font-extrabold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200">
+                PI Assessment Mode
+              </div>
+            )}
+
+            {/* Subject Loading Action: RESTRICTED TO PI & ADMIN ONLY */}
+            {canLoadSubject ? (
+              <button
+                onClick={() => {
+                  setModalStudyId(activeStudyId);
+                  setShowEvalModal(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1D64EC] hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-2xs transition"
+              >
+                <UserPlus className="w-4 h-4" /> + Load / Register Subject
+              </button>
+            ) : (
+              <div className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-slate-400" /> Subject Loading: Restricted to PI & Admin
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right 2 Columns: Selected Review Detail & Approvals */}
-        <div className="lg:col-span-2 space-y-6">
-          {selectedReview ? (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 space-y-6">
-              {/* Header Info */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Subject ID: {selectedReview.subjectId}
-                    </h3>
-                    <span className="text-xs font-mono bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200">
-                      {selectedReview.id}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Submitted by {selectedReview.submittedByName} ({selectedReview.submittedByEmail}) on {selectedReview.submittedAt}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-semibold text-gray-400">Overall Status</div>
-                  <div className="text-sm font-black text-blue-700 uppercase tracking-wide">
-                    {selectedReview.status}
-                  </div>
-                </div>
-              </div>
+        {/* Cascaded Selection Controls Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Step 1: Select Study Protocol */}
+          <div>
+            <label className="block text-xs font-black text-slate-800 mb-1.5 uppercase tracking-wider flex items-center justify-between">
+              <span>1. SELECT STUDY PROTOCOL *</span>
+              <span className="text-[10px] text-blue-700 font-bold">{activeIndication}</span>
+            </label>
+            <select
+              value={activeStudyId}
+              onChange={(e) => handleStudyChange(e.target.value)}
+              className="w-full px-4 py-2.5 bg-blue-50/70 border border-blue-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-full"
+            >
+              <option value="MHT-2101-C01">MHT-2101-C01 — MYOGUARD-1 Phase III</option>
+              <option value="SLT-206-C118">SLT-206-C118 — Cerevastatin Phase III</option>
+              <option value="ZP-010-BS01">ZP-010-BS01 — ZEPHYR Phase III</option>
+            </select>
+          </div>
 
-              {/* Multi-Stage Sign-off Pipeline Visualizer */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                <div className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-                  Tri-Party Sign-off Matrix
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Step 1: PI */}
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-xs space-y-2">
-                    <div className="flex items-center justify-between font-bold text-gray-900">
-                      <span className="flex items-center gap-1.5"><Stethoscope className="w-3.5 h-3.5 text-blue-600" /> 1. PI Sign-off</span>
-                      {selectedReview.piApproval?.approved ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <Clock className="w-4 h-4 text-amber-500" />
-                      )}
-                    </div>
-                    {selectedReview.piApproval?.approved ? (
-                      <div className="text-[11px] text-gray-600">
-                        <div className="font-semibold text-emerald-700">Verified & Approved</div>
-                        <div>By: {selectedReview.piApproval.by}</div>
-                        <div className="text-gray-400">{selectedReview.piApproval.at}</div>
-                      </div>
-                    ) : canPIApprove ? (
-                      <button
-                        onClick={() => handleApproveStage(selectedReview.id, "pi")}
-                        className="w-full mt-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded text-[11px] transition"
-                      >
-                        Sign-off as PI
-                      </button>
-                    ) : (
-                      <div className="text-[11px] text-gray-400 italic">Pending PI Signature</div>
-                    )}
-                  </div>
-
-                  {/* Step 2: CRO */}
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-xs space-y-2">
-                    <div className="flex items-center justify-between font-bold text-gray-900">
-                      <span className="flex items-center gap-1.5"><UserCheck className="w-3.5 h-3.5 text-emerald-600" /> 2. CRO Monitor</span>
-                      {selectedReview.croApproval?.approved ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <Clock className="w-4 h-4 text-amber-500" />
-                      )}
-                    </div>
-                    {selectedReview.croApproval?.approved ? (
-                      <div className="text-[11px] text-gray-600">
-                        <div className="font-semibold text-emerald-700">Verified & Approved</div>
-                        <div>By: {selectedReview.croApproval.by}</div>
-                        <div className="text-gray-400">{selectedReview.croApproval.at}</div>
-                      </div>
-                    ) : canCROApprove ? (
-                      <button
-                        onClick={() => handleApproveStage(selectedReview.id, "cro")}
-                        className="w-full mt-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[11px] transition"
-                      >
-                        Verify as CRO
-                      </button>
-                    ) : (
-                      <div className="text-[11px] text-gray-400 italic">Pending CRO Review</div>
-                    )}
-                  </div>
-
-                  {/* Step 3: Sponsor */}
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 text-xs space-y-2">
-                    <div className="flex items-center justify-between font-bold text-gray-900">
-                      <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-amber-600" /> 3. Sponsor Sign-off</span>
-                      {selectedReview.sponsorApproval?.approved ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <Clock className="w-4 h-4 text-amber-500" />
-                      )}
-                    </div>
-                    {selectedReview.sponsorApproval?.approved ? (
-                      <div className="text-[11px] text-gray-600">
-                        <div className="font-semibold text-emerald-700">Final Enrollment Approved</div>
-                        <div>By: {selectedReview.sponsorApproval.by}</div>
-                        <div className="text-gray-400">{selectedReview.sponsorApproval.at}</div>
-                      </div>
-                    ) : canSponsorApprove ? (
-                      <button
-                        onClick={() => handleApproveStage(selectedReview.id, "sponsor")}
-                        className="w-full mt-1 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded text-[11px] transition"
-                      >
-                        Approve as Sponsor
-                      </button>
-                    ) : (
-                      <div className="text-[11px] text-gray-400 italic">Pending Sponsor Approval</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Protocol Criteria Evaluation Table */}
-              <div>
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                  Protocol Inclusion / Exclusion Verification
-                </h4>
-                <div className="border border-gray-200 rounded-xl overflow-hidden text-xs">
-                  <table className="w-full text-left">
-                    <thead className="bg-gray-50 text-gray-500 font-semibold uppercase border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-2.5">Code</th>
-                        <th className="px-4 py-2.5">Category</th>
-                        <th className="px-4 py-2.5">Protocol Requirement</th>
-                        <th className="px-4 py-2.5 text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {selectedReview.criteria.map((c) => (
-                        <tr key={c.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-2.5 font-bold text-gray-900">{c.code}</td>
-                          <td className="px-4 py-2.5 font-semibold">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] ${
-                                c.type === "Inclusion"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-rose-100 text-rose-800"
-                              }`}
-                            >
-                              {c.type}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-gray-700">{c.description}</td>
-                          <td className="px-4 py-2.5 text-center font-bold">
-                            {c.type === "Inclusion" ? (
-                              c.met ? (
-                                <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">MET</span>
-                              ) : (
-                                <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">NOT MET</span>
-                              )
-                            ) : !c.met ? (
-                              <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-medium">ABSENT (CLEAR)</span>
-                            ) : (
-                              <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">VIOLATION</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {selectedReview.overallComments && (
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 text-xs">
-                  <div className="font-bold text-gray-700 mb-1">Medical Reviewer Notes</div>
-                  <p className="text-gray-600">{selectedReview.overallComments}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-gray-400">
-              Select a subject review from the left queue to evaluate approvals.
-            </div>
-          )}
+          {/* Step 2: Select Subject in Study (DEPENDENT) */}
+          <div>
+            <label className="block text-xs font-black text-slate-800 mb-1.5 uppercase tracking-wider flex items-center justify-between">
+              <span>2. SELECT SUBJECT IN STUDY *</span>
+              <span className="text-[10px] text-slate-500 font-medium">({availableSubjects.length} registered subjects)</span>
+            </label>
+            <select
+              value={activeSubjectId}
+              onChange={(e) => {
+                setActiveSubjectId(e.target.value);
+                setCompiledWriteup(null);
+              }}
+              className={`w-full px-4 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer max-w-full ${
+                !activeSubjectId
+                  ? "bg-amber-50 border border-amber-300 text-amber-900 focus:ring-2 focus:ring-amber-500"
+                  : "bg-emerald-50/80 border border-emerald-300 text-emerald-900 focus:ring-2 focus:ring-emerald-500"
+              }`}
+            >
+              <option value="">-- Select Subject in Study (Required) --</option>
+              {availableSubjects.map((sub) => (
+                <option key={sub.subjectId} value={sub.subjectId}>
+                  Subject {sub.subjectId} ({sub.ageSex} • {sub.site} • {sub.status})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {/* Mandatory Subject Selection Context Alert Banner */}
+        {!activeSubjectId ? (
+          <div className="bg-amber-50 border border-amber-300/80 rounded-xl p-3.5 text-xs text-amber-900 font-medium flex items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span>
+                <strong>Mandatory Context Directive:</strong> No eligibility evaluation can be performed without selecting a Subject. Please select a Subject from the dropdown above.
+              </span>
+            </div>
+            <span className="text-[10px] font-black uppercase bg-amber-200/80 text-amber-900 px-2.5 py-1 rounded-md flex-shrink-0">
+              Awaiting Subject Selection
+            </span>
+          </div>
+        ) : (
+          <div className="bg-emerald-50 border border-emerald-300/80 rounded-xl p-3.5 text-xs text-emerald-900 font-medium flex items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>
+                Active Subject Context Loaded: <strong className="font-extrabold text-emerald-950">Subject {selectedSubjectMeta?.subjectId}</strong> ({selectedSubjectMeta?.ageSex} • {selectedSubjectMeta?.site} • {selectedSubjectMeta?.status})
+              </span>
+            </div>
+            <span className="text-[10px] font-black uppercase bg-emerald-200/80 text-emerald-900 px-2.5 py-1 rounded-md flex-shrink-0">
+              Context Ready
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* New Subject Modal */}
-      {showNewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-gray-100">
-            <h3 className="font-bold text-lg text-gray-900 border-b border-gray-100 pb-3">
-              Submit New Subject Eligibility Review
-            </h3>
+      {/* VIEW MODE 1: CRO & SPONSOR MEDICAL MONITOR ELIGIBILITY REVIEW BOARD */}
+      {viewMode === "medical_board" && canAccessMedicalBoard && (
+        <div className="space-y-6">
+          {/* Header & Search Bar */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                Eligibility Review Board
+              </h2>
+              <p className="text-xs text-slate-500 font-bold mt-0.5">
+                Clinical Trial Eligibility System (CTES) • Indication: <span className="text-blue-700 font-extrabold">{activeIndication}</span>
+              </p>
+            </div>
 
-            <form onSubmit={handleCreateReview} className="space-y-4 text-xs">
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={boardSearch}
+                onChange={(e) => setBoardSearch(e.target.value)}
+                placeholder="Search ID, site, PI..."
+                className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 w-64 focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+              />
+            </div>
+          </div>
+
+          {/* Stat Summary Cards Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div 
+              onClick={() => setSelectedBoardFilter("ALL")}
+              className={`bg-white p-4 rounded-2xl border cursor-pointer transition shadow-2xs ${
+                selectedBoardFilter === "ALL" ? "border-amber-400 ring-2 ring-amber-400/30" : "border-slate-200/80 hover:border-slate-300"
+              }`}
+            >
+              <div className="text-[11px] font-black text-slate-500 uppercase tracking-wider">ALL REGISTERED</div>
+              <div className="text-2xl font-black text-slate-900 mt-1">{availableSubjects.length} <span className="text-xs font-normal text-slate-400">subjects</span></div>
+            </div>
+
+            <div 
+              onClick={() => setSelectedBoardFilter("SCREENING")}
+              className={`bg-white p-4 rounded-2xl border cursor-pointer transition shadow-2xs ${
+                selectedBoardFilter === "SCREENING" ? "border-blue-500 ring-2 ring-blue-500/30" : "border-slate-200/80 hover:border-slate-300"
+              }`}
+            >
+              <div className="text-[11px] font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> SCREENING
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-1">1 <span className="text-xs font-normal text-slate-400">subject</span></div>
+            </div>
+
+            <div 
+              onClick={() => setSelectedBoardFilter("PENDING")}
+              className={`bg-white p-4 rounded-2xl border cursor-pointer transition shadow-2xs ${
+                selectedBoardFilter === "PENDING" ? "border-amber-500 ring-2 ring-amber-500/30" : "border-slate-200/80 hover:border-slate-300"
+              }`}
+            >
+              <div className="text-[11px] font-black text-amber-600 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> PENDING REVIEW
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-1">1 <span className="text-xs font-normal text-slate-400">subject</span></div>
+            </div>
+
+            <div 
+              onClick={() => setSelectedBoardFilter("APPROVED")}
+              className={`bg-white p-4 rounded-2xl border cursor-pointer transition shadow-2xs ${
+                selectedBoardFilter === "APPROVED" ? "border-emerald-500 ring-2 ring-emerald-500/30" : "border-slate-200/80 hover:border-slate-300"
+              }`}
+            >
+              <div className="text-[11px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> APPROVED
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-1">1 <span className="text-xs font-normal text-slate-400">subject</span></div>
+            </div>
+
+            <div 
+              onClick={() => setSelectedBoardFilter("SCREEN_FAIL")}
+              className={`bg-white p-4 rounded-2xl border cursor-pointer transition shadow-2xs ${
+                selectedBoardFilter === "SCREEN_FAIL" ? "border-rose-500 ring-2 ring-rose-500/30" : "border-slate-200/80 hover:border-slate-300"
+              }`}
+            >
+              <div className="text-[11px] font-black text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> SCREEN FAIL
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-1">1 <span className="text-xs font-normal text-slate-400">subject</span></div>
+            </div>
+          </div>
+
+          {/* Perform Eligibility Review (Medical Monitor) Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+            {/* Card Header */}
+            <div className="p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4 bg-slate-50/50">
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">Subject Screening ID *</label>
-                <input
-                  type="text"
-                  required
-                  value={subjectId}
-                  onChange={(e) => setSubjectId(e.target.value)}
-                  placeholder="e.g. 101-008"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono max-w-full"
-                />
-                <p className="text-[10px] text-gray-500 mt-1">
-                  * GCP Constraint: Subject ID must be unique and bound strictly to protocol MHT-2101-C01.
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-purple-600" />
+                  Perform Eligibility Review (Medical Monitor)
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Upload source logs (PDF, DOCX, image, TXT) to parse clinical parameters against study criteria.
                 </p>
               </div>
 
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Clinical Trial Site</label>
-                <input
-                  type="text"
-                  value={siteId}
-                  onChange={(e) => setSiteId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs max-w-full"
-                />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-extrabold shadow-2xs">
+                <Lock className="w-3.5 h-3.5 text-amber-600" /> Safe & Secure Client Processing
+              </span>
+            </div>
+
+            {/* Main Content Grid: Left Controls (1/3) vs Right Writeup Report (2/3) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+              {/* Left Column Controls */}
+              <div className="p-6 space-y-5 bg-slate-50/30">
+                {/* Drag & Drop Upload Zone */}
+                <div>
+                  <label className="block text-xs font-black text-slate-800 mb-2">Stage Source Documents</label>
+                  <label className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition block space-y-2 ${
+                    !activeSubjectId
+                      ? "bg-slate-100 border-slate-300 opacity-60 cursor-not-allowed"
+                      : "border-slate-300 hover:border-blue-500 bg-white hover:bg-blue-50/30"
+                  }`}>
+                    <input 
+                      type="file" 
+                      multiple 
+                      disabled={!activeSubjectId}
+                      accept=".pdf,.docx,.txt,.png,.jpg" 
+                      onChange={handleFileUpload} 
+                      className="hidden" 
+                    />
+                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+                      <Upload className="w-5 h-5" />
+                    </div>
+                    <div className="text-xs font-extrabold text-slate-800">
+                      Drag & drop files or <span className="text-blue-600 underline">browse</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium">PDF, Word doc, txt, images up to 100MB</p>
+                  </label>
+                </div>
+
+                {/* Staged File List */}
+                {stagedFiles.length > 0 && (
+                  <div className="space-y-1.5 bg-white p-3 rounded-xl border border-slate-200 text-xs">
+                    <div className="font-extrabold text-slate-700 text-[11px] uppercase tracking-wider">Staged Documents ({stagedFiles.length})</div>
+                    {stagedFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+                        <span className="font-bold text-slate-800 truncate max-w-[150px]">{file.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">{file.size}</span>
+                        <button
+                          onClick={() => setStagedFiles(stagedFiles.filter((_, i) => i !== idx))}
+                          className="p-1 text-slate-400 hover:text-rose-600"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Run Eligibility Review Action Button (GATED BY SUBJECT CONTEXT) */}
+                <button
+                  onClick={handleRunEligibilityReview}
+                  disabled={isAnalyzing || !activeSubjectId}
+                  className={`w-full py-3 font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 ${
+                    !activeSubjectId
+                      ? "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
+                      : "bg-[#1D64EC] hover:bg-blue-700 text-white"
+                  }`}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <RotateCcw className="w-4 h-4 animate-spin" /> Analyzing Clinical Parameters...
+                    </>
+                  ) : !activeSubjectId ? (
+                    <>
+                      🚫 Select a Subject First
+                    </>
+                  ) : (
+                    <>
+                      🧠 Run Eligibility review
+                    </>
+                  )}
+                </button>
+
+                {/* Study Protocol Criteria Context Box */}
+                <div className="bg-slate-100/90 rounded-2xl p-4 border border-slate-200 text-xs space-y-2">
+                  <div className="text-[11px] font-black text-slate-700 uppercase tracking-wider">
+                    STUDY PROTOCOL CRITERIA CONTEXT
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-900">
+                    <span>Study: <strong className="text-blue-700 font-extrabold">{activeStudyId}</strong></span>
+                    <span>Indication: <strong className="text-slate-800 font-extrabold">{activeIndication}</strong></span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-200 text-[11px] text-slate-600 font-medium leading-relaxed">
+                    <strong className="text-slate-800 font-extrabold block mb-0.5">Key parameters:</strong>
+                    {activeStudyId.includes("MHT") ? (
+                      <span>CLIA Genetic Confirmation • AST/ALT &lt; 3.0x ULN • Vector Naive • Age 18-65</span>
+                    ) : activeStudyId.includes("SLT") ? (
+                      <span>MADRS ≥ 24 • TSH 0.85-1.5x ULN • ALT/AST &lt; 3.0x ULN • C-SSRS &lt; Grade 4</span>
+                    ) : (
+                      <span>MADRS ≥ 20 • TSH 0.85-1.5x ULN • ALT/AST &lt; 3.0x ULN • QTcF &lt; 450ms (M)/470ms (F)</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2 border border-gray-200 rounded-xl p-3 bg-gray-50">
-                <div className="font-bold text-gray-800">Criteria Checkpoints</div>
+              {/* Right Column: Medical Monitor Writeup Report */}
+              <div className="lg:col-span-2 p-6 flex flex-col justify-between min-h-[460px]">
+                <div>
+                  <div className="text-xs font-black text-slate-800 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center justify-between">
+                    <span>MEDICAL MONITOR WRITEUP REPORT</span>
+                    {compiledWriteup && (
+                      <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                        {compiledWriteup.overallStatus}
+                      </span>
+                    )}
+                  </div>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={incAge}
-                    onChange={(e) => setIncAge(e.target.checked)}
-                    className="rounded text-blue-600"
-                  />
-                  <span>INC 01: Age 18-65 at consent</span>
-                </label>
+                  {!activeSubjectId ? (
+                    /* Mandatory Subject Gating Empty State */
+                    <div className="py-20 text-center space-y-3">
+                      <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+                        <AlertTriangle className="w-7 h-7" />
+                      </div>
+                      <h4 className="font-extrabold text-slate-800 text-sm">No Subject Selected</h4>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium leading-relaxed">
+                        Please select a study protocol and a subject from the header dropdowns above to initiate eligibility assessment.
+                      </p>
+                    </div>
+                  ) : !compiledWriteup ? (
+                    /* Default Empty State when subject selected but not compiled */
+                    <div className="py-20 text-center space-y-3">
+                      <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                        <FileText className="w-7 h-7" />
+                      </div>
+                      <h4 className="font-extrabold text-slate-800 text-sm">No Eligibility Review Compiled</h4>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium leading-relaxed">
+                        Stage patient file logs for Subject <strong>{activeSubjectId}</strong> on the left and select "Run Eligibility review" to compile audit report.
+                      </p>
+                    </div>
+                  ) : (
+                    /* Compiled Writeup View */
+                    <div className="py-4 space-y-5">
+                      <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div>
+                          <div className="font-black text-emerald-900 text-sm">
+                            Medical Monitor Eligibility Assessment: PASSED
+                          </div>
+                          <p className="text-emerald-700 font-medium mt-0.5">
+                            Subject ID: <strong className="font-extrabold">{compiledWriteup.subjectId}</strong> • Compiled by {compiledWriteup.compiledBy} on {compiledWriteup.compiledAt}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handlePrintSummary}
+                          className="px-3.5 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-900 font-bold rounded-xl shadow-2xs transition flex items-center gap-1.5"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-emerald-700" /> Export Writeup PDF
+                        </button>
+                      </div>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={incGenetic}
-                    onChange={(e) => setIncGenetic(e.target.checked)}
-                    className="rounded text-blue-600"
-                  />
-                  <span>INC 02: Confirmed genetic diagnosis of VKCM</span>
-                </label>
+                      <div className="space-y-2">
+                        <div className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                          Extracted Clinical Parameter Audit
+                        </div>
+                        <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                          <table className="w-full text-left">
+                            <thead className="bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-wider border-b border-slate-200">
+                              <tr>
+                                <th className="px-4 py-2.5">CLINICAL PARAMETER</th>
+                                <th className="px-4 py-2.5">PATIENT VALUE</th>
+                                <th className="px-4 py-2.5">PROTOCOL REQUIREMENT</th>
+                                <th className="px-4 py-2.5 text-center">COMPLIANCE</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 font-medium">
+                              {compiledWriteup.parameters.map((p, i) => (
+                                <tr key={i} className="hover:bg-slate-50">
+                                  <td className="px-4 py-2.5 font-bold text-slate-900">{p.name}</td>
+                                  <td className="px-4 py-2.5 font-semibold text-slate-800">{p.patientValue}</td>
+                                  <td className="px-4 py-2.5 text-slate-600">{p.targetRequirement}</td>
+                                  <td className="px-4 py-2.5 text-center font-extrabold">
+                                    <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-[10px] border border-emerald-300">
+                                      ✓ {p.status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={excAst}
-                    onChange={(e) => setExcAst(e.target.checked)}
-                    className="rounded text-rose-600"
-                  />
-                  <span className="text-rose-700">EXC 01: AST/ALT &gt; 3x ULN (Check if violation present)</span>
-                </label>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1 text-xs">
+                        <div className="font-black text-slate-900 flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-purple-600" /> Automated Compliance Narrative Writeup
+                        </div>
+                        <p className="text-slate-700 font-medium leading-relaxed">
+                          {compiledWriteup.narrative}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-end gap-3 pt-2 border-t border-slate-100">
+                        <button
+                          onClick={() => alert(`Screen fail status recorded for Subject ${compiledWriteup.subjectId}.`)}
+                          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-2xs transition"
+                        >
+                          Issue Screen Fail
+                        </button>
+                        <button
+                          onClick={() => alert(`Subject ${compiledWriteup.subjectId} successfully approved by Medical Monitor.`)}
+                          className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-2xs transition"
+                        >
+                          Approve Subject Eligibility
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Bar */}
+                <div className="pt-4 border-t border-slate-100 text-[11px] font-bold text-slate-500 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-slate-400" /> Protocol {activeStudyId} • 21 CFR Part 11 eSign-captured
+                  </span>
+                  <span>System Audit Log ID: CTES-2026-9912</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW MODE 2: PI SUBJECT INCLUSION/EXCLUSION CHECKLIST & TRI-PARTY MATRIX */}
+      {(viewMode === "checklist" || !canAccessMedicalBoard) && (
+        <div className="space-y-6">
+          {/* Top Banner & Action */}
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <div>
+              <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <ClipboardCheck className="w-5 h-5 text-[#1D64EC]" />
+                Eligibility Reviews & Multi-Stage Approvals
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Tri-party Sign-off Engine: PI Criteria Evaluation ➔ CRO Verification ➔ Sponsor Final Sign-off
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handlePrintSummary}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-2xs transition"
+              >
+                <Printer className="w-4 h-4 text-slate-600" /> Print / Export Summary
+              </button>
+
+              {canPIApprove && (
+                <button
+                  onClick={() => {
+                    handleStudyChange(activeStudyId);
+                    setShowEvalModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1D64EC] hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-md transition"
+                >
+                  <Plus className="w-4 h-4" /> Evaluate & Submit Subject Review
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Main Grid: Left Review Queue + Right Review Detail */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Review Queue (1/3 width) */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 space-y-3">
+              <div className="flex items-center justify-between px-2 pb-2 border-b border-slate-100">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                  SUBJECT REVIEW QUEUE ({studyReviews.length})
+                </span>
+                <span className="text-[10px] font-bold bg-blue-50 text-blue-800 px-2 py-0.5 rounded border border-blue-200">
+                  {activeStudyId}
+                </span>
               </div>
 
+              <div className="space-y-2">
+                {studyReviews.length > 0 ? (
+                  studyReviews.map((rev) => {
+                    const isSelected = selectedReview?.id === rev.id;
+                    const evalRes = calculateEligibility(rev.criteria);
+
+                    return (
+                      <div
+                        key={rev.id}
+                        onClick={() => setSelectedReview(rev)}
+                        className={`p-3.5 rounded-xl border transition cursor-pointer space-y-1.5 ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50/70 shadow-2xs"
+                            : "border-slate-200/80 bg-white hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-extrabold text-slate-900 text-sm">Subject {rev.subjectId}</span>
+                          <span
+                            className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                              rev.status === "Approved"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                : rev.status === "Rejected"
+                                ? "bg-rose-100 text-rose-800 border border-rose-300"
+                                : "bg-amber-100 text-amber-800 border border-amber-300"
+                            }`}
+                          >
+                            {rev.status}
+                          </span>
+                        </div>
+
+                        <div className="text-xs text-slate-600 font-medium">{rev.siteId}</div>
+
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+                          <span>Protocol: {rev.studyId}</span>
+                          <span>{rev.submittedAt.slice(0, 10)}</span>
+                        </div>
+
+                        <div className="pt-1">
+                          {evalRes.isEligible ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> ELIGIBLE
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                              <XCircle className="w-3 h-3 text-rose-600" /> NOT ELIGIBLE ({evalRes.failedCount} Failed)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12 text-slate-400 text-xs font-medium space-y-1">
+                    <div>No pending eligibility reviews for protocol {activeStudyId}.</div>
+                    <div className="text-[10px]">Click "+ Load / Register Subject" to register and evaluate a subject.</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right 2 Columns: Selected Review Detail & Approvals (2/3 width) */}
+            <div className="lg:col-span-2 space-y-6">
+              {selectedReview ? (
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 space-y-6">
+                  {/* Header Info */}
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-2xl font-black text-slate-900">
+                          Subject ID: {selectedReview.subjectId}
+                        </h3>
+                        <span className="text-xs font-mono bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold border border-slate-200">
+                          {selectedReview.id}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium mt-1">
+                        Submitted by <strong className="text-slate-800">{selectedReview.submittedByName}</strong> ({selectedReview.submittedByEmail}) on {selectedReview.submittedAt}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Overall Review Status</div>
+                      <div className="text-base font-black text-blue-700 uppercase tracking-wide">
+                        {selectedReview.status}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Multi-Stage Sign-off Pipeline Visualizer */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                    <div className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center justify-between">
+                      <span>TRI-PARTY SIGN-OFF MATRIX</span>
+                      <span className="text-[10px] text-slate-500 font-normal">Protocol-bound FDA Audit Lock</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Step 1: PI */}
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs space-y-2">
+                        <div className="flex items-center justify-between font-extrabold text-slate-900">
+                          <span className="flex items-center gap-1.5">
+                            <Stethoscope className="w-4 h-4 text-blue-600" /> 1. PI Sign-off
+                          </span>
+                          {selectedReview.piApproval?.approved ? (
+                            <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
+                          ) : (
+                            <Clock className="w-4.5 h-4.5 text-amber-500" />
+                          )}
+                        </div>
+                        {selectedReview.piApproval?.approved ? (
+                          <div className="text-[11px] text-slate-600 font-medium space-y-0.5">
+                            <div className="font-bold text-emerald-700">Verified & Approved</div>
+                            <div>By: {selectedReview.piApproval.by}</div>
+                            <div className="text-slate-400 text-[10px]">{selectedReview.piApproval.at}</div>
+                          </div>
+                        ) : canPIApprove ? (
+                          <button
+                            onClick={() => handleApproveStage(selectedReview.id, "pi")}
+                            className="w-full mt-1 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-lg text-xs transition shadow-2xs"
+                          >
+                            Sign-off as PI
+                          </button>
+                        ) : (
+                          <div className="text-[11px] text-slate-400 italic">Pending PI Signature</div>
+                        )}
+                      </div>
+
+                      {/* Step 2: CRO */}
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs space-y-2">
+                        <div className="flex items-center justify-between font-extrabold text-slate-900">
+                          <span className="flex items-center gap-1.5">
+                            <UserCheck className="w-4 h-4 text-emerald-600" /> 2. CRO Monitor
+                          </span>
+                          {selectedReview.croApproval?.approved ? (
+                            <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
+                          ) : (
+                            <Clock className="w-4.5 h-4.5 text-amber-500" />
+                          )}
+                        </div>
+                        {selectedReview.croApproval?.approved ? (
+                          <div className="text-[11px] text-slate-600 font-medium space-y-0.5">
+                            <div className="font-bold text-emerald-700">Verified & Approved</div>
+                            <div>By: {selectedReview.croApproval.by}</div>
+                            <div className="text-slate-400 text-[10px]">{selectedReview.croApproval.at}</div>
+                          </div>
+                        ) : canCROApprove ? (
+                          <button
+                            onClick={() => handleApproveStage(selectedReview.id, "cro")}
+                            className="w-full mt-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg text-xs transition shadow-2xs"
+                          >
+                            Verify as CRO
+                          </button>
+                        ) : (
+                          <div className="text-[11px] text-slate-400 italic">Pending CRO Verification</div>
+                        )}
+                      </div>
+
+                      {/* Step 3: Sponsor */}
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs space-y-2">
+                        <div className="flex items-center justify-between font-extrabold text-slate-900">
+                          <span className="flex items-center gap-1.5">
+                            <Building2 className="w-4 h-4 text-amber-600" /> 3. Sponsor Sign-off
+                          </span>
+                          {selectedReview.sponsorApproval?.approved ? (
+                            <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
+                          ) : (
+                            <Clock className="w-4.5 h-4.5 text-amber-500" />
+                          )}
+                        </div>
+                        {selectedReview.sponsorApproval?.approved ? (
+                          <div className="text-[11px] text-slate-600 font-medium space-y-0.5">
+                            <div className="font-bold text-emerald-700">Final Sign-off Granted</div>
+                            <div>By: {selectedReview.sponsorApproval.by}</div>
+                            <div className="text-slate-400 text-[10px]">{selectedReview.sponsorApproval.at}</div>
+                          </div>
+                        ) : canSponsorApprove ? (
+                          <button
+                            onClick={() => handleApproveStage(selectedReview.id, "sponsor")}
+                            className="w-full mt-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-lg text-xs transition shadow-2xs"
+                          >
+                            Approve as Sponsor
+                          </button>
+                        ) : (
+                          <div className="text-[11px] text-slate-400 italic">Pending Sponsor Approval</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Protocol Criteria Evaluation Table */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                      PROTOCOL INCLUSION / EXCLUSION VERIFICATION
+                    </h4>
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden text-xs">
+                      <table className="w-full text-left">
+                        <thead className="bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-wider border-b border-slate-200">
+                          <tr>
+                            <th className="px-4 py-3">CODE</th>
+                            <th className="px-4 py-3">CATEGORY</th>
+                            <th className="px-4 py-3">PROTOCOL REQUIREMENT</th>
+                            <th className="px-4 py-3 text-center">EVALUATION STATUS</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {selectedReview.criteria.map((c) => (
+                            <tr key={c.id} className="hover:bg-slate-50">
+                              <td className="px-4 py-3 font-extrabold text-slate-900">{c.code}</td>
+                              <td className="px-4 py-3 font-bold">
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                                    c.type === "Inclusion"
+                                      ? "bg-blue-100 text-blue-800 border border-blue-200"
+                                      : "bg-rose-100 text-rose-800 border border-rose-200"
+                                  }`}
+                                >
+                                  {c.type}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 font-medium text-slate-800">{c.description}</td>
+                              <td className="px-4 py-3 text-center font-extrabold">
+                                {c.type === "Inclusion" ? (
+                                  c.met ? (
+                                    <span className="text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                                      ✓ MET
+                                    </span>
+                                  ) : (
+                                    <span className="text-rose-800 bg-rose-100/80 px-2.5 py-0.5 rounded-full border border-rose-300">
+                                      ✗ NOT MET
+                                    </span>
+                                  )
+                                ) : !c.met ? (
+                                  <span className="text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                                    ✓ ABSENT (CLEAR)
+                                  </span>
+                                ) : (
+                                  <span className="text-rose-800 bg-rose-100/80 px-2.5 py-0.5 rounded-full border border-rose-300">
+                                    ⚠ VIOLATION PRESENT
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {selectedReview.overallComments && (
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs space-y-1">
+                      <div className="font-extrabold text-slate-900">Medical Reviewer Notes</div>
+                      <p className="text-slate-700 font-medium">{selectedReview.overallComments}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 font-medium">
+                  Select a subject review from the left queue to evaluate approvals.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INTERACTIVE PI / ADMIN INCLUSION & EXCLUSION EVALUATION & SUBJECT REGISTRATION MODAL */}
+      {showEvalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-6 overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-700 to-blue-900 px-6 py-4 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2.5 font-extrabold text-base">
+                <FileCheck className="w-5 h-5 text-blue-300" />
+                <span>Register & Evaluate Subject Inclusion & Exclusion Criteria</span>
+              </div>
+              <button
+                onClick={() => setShowEvalModal(false)}
+                className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Instruction Notice Banner */}
+            <div className="bg-amber-50 border-b border-amber-200/80 px-6 py-3 text-xs text-amber-900 font-medium flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span>
+                <strong>PI / Admin Directive:</strong> Registering a subject initializes their eligibility assessment. Select "YES" for Met Inclusions and "NO" for Absent Exclusions.
+              </span>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateReviewSubmit} className="p-6 space-y-5 text-xs max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block font-extrabold text-slate-800 mb-1">Select Study Protocol *</label>
+                  <select
+                    value={modalStudyId}
+                    onChange={(e) => {
+                      setModalStudyId(e.target.value);
+                      const base = PROTOCOL_CRITERIA_DATABASE[e.target.value] || PROTOCOL_CRITERIA_DATABASE["MHT-2101-C01"];
+                      setEvalCriteria(base.map((c) => ({ ...c })));
+                    }}
+                    className="w-full px-3 py-2 bg-blue-50/80 border border-blue-300 rounded-xl text-xs font-extrabold text-slate-900 max-w-full"
+                  >
+                    <option value="MHT-2101-C01">MHT-2101-C01 (MYOGUARD-1 Phase III)</option>
+                    <option value="SLT-206-C118">SLT-206-C118 (Cerevastatin Phase III)</option>
+                    <option value="ZP-010-BS01">ZP-010-BS01 (ZEPHYR Phase III)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-extrabold text-slate-800 mb-1">Subject Screening ID *</label>
+                  <input
+                    type="text"
+                    required
+                    value={modalSubjectId}
+                    onChange={(e) => setModalSubjectId(e.target.value)}
+                    placeholder="e.g. 101-008"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono font-bold text-slate-900 max-w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-extrabold text-slate-800 mb-1">Clinical Trial Site</label>
+                  <input
+                    type="text"
+                    value={modalSiteId}
+                    onChange={(e) => setModalSiteId(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 max-w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Interactive I/E Checklist Items */}
+              <div className="space-y-3">
+                <div className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center justify-between">
+                  <span>CRITERIA EVALUATION CHECKLIST ({evalCriteria.length} Criteria)</span>
+                  <span className="text-[10px] text-slate-500 font-normal">Interactive PI Assessment</span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {evalCriteria.map((c, idx) => (
+                    <div key={c.id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-slate-100/80 transition">
+                      <div className="flex items-start gap-2.5 flex-1">
+                        <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-black text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <strong className="text-slate-900 font-extrabold">{c.code}</strong>
+                            <span className={`px-2 py-0.2 rounded text-[9px] font-black ${c.type === "Inclusion" ? "bg-blue-100 text-blue-800" : "bg-rose-100 text-rose-800"}`}>
+                              {c.type}
+                            </span>
+                          </div>
+                          <p className="text-slate-700 font-medium text-xs leading-snug">{c.description}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {c.type === "Inclusion" ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCriterion(c.id, true)}
+                              className={`px-3.5 py-1.5 rounded-full font-bold text-xs transition ${c.met ? "bg-emerald-600 text-white shadow-2xs font-extrabold" : "bg-slate-200 text-slate-600 hover:bg-slate-300"}`}
+                            >
+                              Yes (Met)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCriterion(c.id, false)}
+                              className={`px-3.5 py-1.5 rounded-full font-bold text-xs transition ${!c.met ? "bg-rose-600 text-white shadow-2xs font-extrabold" : "bg-slate-200 text-slate-600 hover:bg-slate-300"}`}
+                            >
+                              No (Not Met)
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCriterion(c.id, false)}
+                              className={`px-3.5 py-1.5 rounded-full font-bold text-xs transition ${!c.met ? "bg-emerald-600 text-white shadow-2xs font-extrabold" : "bg-slate-200 text-slate-600 hover:bg-slate-300"}`}
+                            >
+                              No (Absent / Clear)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCriterion(c.id, true)}
+                              className={`px-3.5 py-1.5 rounded-full font-bold text-xs transition ${c.met ? "bg-rose-600 text-white shadow-2xs font-extrabold" : "bg-slate-200 text-slate-600 hover:bg-slate-300"}`}
+                            >
+                              Yes (Violation Present)
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* LIVE ELIGIBILITY CALCULATION ENGINE RESULTS BANNER */}
+              <div className="pt-2">
+                {currentEvalResult.isEligible ? (
+                  <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-4 text-emerald-900 space-y-1 shadow-2xs">
+                    <div className="flex items-center gap-2 font-black text-sm text-emerald-800">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <span>Preliminary Assessment Result: ELIGIBLE</span>
+                    </div>
+                    <p className="text-xs text-emerald-700 font-medium">
+                      Subject meets all protocol inclusion criteria and has zero exclusion violations. Ready for PI signature and submission to CRO verification.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-rose-50 border border-rose-300 rounded-xl p-4 text-rose-900 space-y-2 shadow-2xs">
+                    <div className="flex items-center gap-2 font-black text-sm text-rose-800">
+                      <XCircle className="w-5 h-5 text-rose-600" />
+                      <span>Preliminary Assessment Result: NOT ELIGIBLE ({currentEvalResult.failedCount} Failed Criteria)</span>
+                    </div>
+                    <div className="text-xs font-semibold text-rose-700">Failed Criteria Details:</div>
+                    <ul className="list-disc list-inside text-xs text-rose-800 space-y-0.5 font-medium">
+                      {currentEvalResult.failedInclusions.map((c) => (
+                        <li key={c.id}>Inclusion Failure: <strong>{c.code}</strong> — {c.description}</li>
+                      ))}
+                      {currentEvalResult.failedExclusions.map((c) => (
+                        <li key={c.id}>Exclusion Violation: <strong>{c.code}</strong> — {c.description}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* PI Medical Notes */}
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">PI Medical Notes</label>
+                <label className="block font-extrabold text-slate-800 mb-1">PI / Admin Medical Reviewer Notes</label>
                 <textarea
                   rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Enter medical notes regarding screening baseline..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs max-w-full"
+                  value={medicalNotes}
+                  onChange={(e) => setMedicalNotes(e.target.value)}
+                  placeholder="Enter medical rationale, source document verification notes, or screening laboratory details..."
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 max-w-full"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowNewModal(false)}
-                  className="px-4 py-2 font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+                  onClick={() => setShowEvalModal(false)}
+                  className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
+                  className="px-5 py-2.5 font-black text-white bg-[#1D64EC] hover:bg-blue-700 rounded-xl shadow-md transition text-xs"
                 >
-                  Submit Review
+                  Register Subject & Complete Evaluation
                 </button>
               </div>
             </form>
