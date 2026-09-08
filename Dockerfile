@@ -1,40 +1,25 @@
-FROM node:18-alpine AS base
+FROM node:20-alpine
 
-# Step 1: Dependencies
-FROM base AS deps
-RUN apk add --no-libc6-compat
 WORKDIR /app
 
+# Copy package files
 COPY package.json package-lock.json ./
+
+# Install dependencies
 RUN npm install --legacy-peer-deps
 
-# Step 2: Builder
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy all source files
 COPY . .
 
+# Build Next.js app
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV production
 RUN npm run build
 
-# Step 3: Runner
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-
+# Expose Cloud Run port
 EXPOSE 8080
 ENV PORT 8080
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "server.js"]
+# Start Next.js production server on Cloud Run port 8080
+CMD ["npm", "run", "start", "--", "-p", "8080"]
