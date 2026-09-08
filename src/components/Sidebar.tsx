@@ -147,6 +147,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     if (itemId === "reports_analytics") {
       return !isPI || !!permissions.reportsAnalytics;
     }
+    if (itemId === "document_vault") {
+      return !isPI || !!permissions.documentVault;
+    }
     return true;
   };
 

@@ -53,6 +53,7 @@ export default function Home() {
     if (tab === "regulatory_etmf") return isPI && !permissions.regulatoryEtmf;
     if (tab === "risk_monitoring") return isPI && !permissions.riskMonitoring;
     if (tab === "reports_analytics") return isPI && !permissions.reportsAnalytics;
+    if (tab === "document_vault") return isPI && !permissions.documentVault;
     return false;
   };
 

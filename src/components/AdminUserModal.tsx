@@ -31,6 +31,7 @@ export const AdminUserModal: React.FC<AdminUserModalProps> = ({
     riskMonitoring: false,
     reportsAnalytics: false,
     adminDashboard: false,
+    documentVault: false,
   });
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export const AdminUserModal: React.FC<AdminUserModalProps> = ({
           regulatoryEtmf: editingUser.role !== "PI",
           riskMonitoring: editingUser.role !== "PI",
           reportsAnalytics: editingUser.role !== "PI",
+          documentVault: editingUser.role !== "PI",
           adminDashboard: editingUser.role === "SuperAdmin" || editingUser.role === "Admin",
         }
       );
@@ -65,6 +67,7 @@ export const AdminUserModal: React.FC<AdminUserModalProps> = ({
         riskMonitoring: false,
         reportsAnalytics: false,
         adminDashboard: false,
+        documentVault: false,
       });
     }
   }, [editingUser, isOpen]);

@@ -43,6 +43,7 @@ export interface UserModulePermissions {
   riskMonitoring?: boolean;
   reportsAnalytics?: boolean;
   adminDashboard?: boolean;
+  documentVault?: boolean;
 }
 
 export interface UserProfile {
