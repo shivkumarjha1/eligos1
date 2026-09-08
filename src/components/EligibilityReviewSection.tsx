@@ -168,7 +168,26 @@ export const EligibilityReviewSection: React.FC = () => {
   const [activeSubjectId, setActiveSubjectId] = useState<string>("");
 
   // Subjects Registry State (allows PI & Admin to register new ones dynamically)
-  const [subjectsRegistry, setSubjectsRegistry] = useState(STUDY_SUBJECTS_REGISTRY);
+  const [subjectsRegistry, setSubjectsRegistry] = useState<Record<string, StudySubjectOption[]>>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("eligos_subjects_registry");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to load saved subjects registry", e);
+        }
+      }
+    }
+    return STUDY_SUBJECTS_REGISTRY;
+  });
+
+  // Save subjectsRegistry to localStorage on change
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("eligos_subjects_registry", JSON.stringify(subjectsRegistry));
+    }
+  }, [subjectsRegistry]);
 
   // View Mode: 'checklist' for PI, default 'medical_board' for CRO/Sponsor/Admin
   const [viewMode, setViewMode] = useState<"checklist" | "medical_board">(
@@ -176,7 +195,27 @@ export const EligibilityReviewSection: React.FC = () => {
   );
 
   // PI Checklist State
-  const [reviews, setReviews] = useState<EligibilityReview[]>(SAMPLE_REVIEWS);
+  const [reviews, setReviews] = useState<EligibilityReview[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("eligos_eligibility_reviews");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to load saved eligibility reviews", e);
+        }
+      }
+    }
+    return SAMPLE_REVIEWS;
+  });
+
+  // Save reviews to localStorage on change
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("eligos_eligibility_reviews", JSON.stringify(reviews));
+    }
+  }, [reviews]);
+
   const [selectedReview, setSelectedReview] = useState<EligibilityReview | null>(SAMPLE_REVIEWS[0]);
 
   // Modal states for Interactive Evaluation Wizard

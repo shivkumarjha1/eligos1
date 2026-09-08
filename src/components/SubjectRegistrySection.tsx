@@ -71,7 +71,27 @@ const INITIAL_REGISTRY_SUBJECTS: RegistrySubject[] = [
 export const SubjectRegistrySection: React.FC = () => {
   const { currentUser, selectedStudyId, setSelectedStudyId, studySummaries } = useAuth();
   
-  const [subjects, setSubjects] = useState<RegistrySubject[]>(INITIAL_REGISTRY_SUBJECTS);
+  // Persistent Subjects State
+  const [subjects, setSubjects] = useState<RegistrySubject[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("eligos_registry_subjects");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to load saved subjects", e);
+        }
+      }
+    }
+    return INITIAL_REGISTRY_SUBJECTS;
+  });
+
+  // Save subjects to localStorage on change
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("eligos_registry_subjects", JSON.stringify(subjects));
+    }
+  }, [subjects]);
   
   // Selected protocol filter state
   const [selectedProtocolFilter, setSelectedProtocolFilter] = useState("MHT-2101-C01 — MYOGUARD-1 Phase III");

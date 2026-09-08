@@ -149,7 +149,27 @@ const INITIAL_CONTACTS: ContactRecord[] = [
 export const StudyContactsDirectorySection: React.FC = () => {
   const { currentUser, selectedStudyId, setSelectedStudyId, studySummaries } = useAuth();
   
-  const [contacts, setContacts] = useState<ContactRecord[]>(INITIAL_CONTACTS);
+  // Persistent Contacts State
+  const [contacts, setContacts] = useState<ContactRecord[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("eligos_contacts");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to load saved contacts", e);
+        }
+      }
+    }
+    return INITIAL_CONTACTS;
+  });
+
+  // Save contacts to localStorage on change
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("eligos_contacts", JSON.stringify(contacts));
+    }
+  }, [contacts]);
   
   // Modal state
   const [showModal, setShowModal] = useState(false);
