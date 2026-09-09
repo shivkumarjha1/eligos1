@@ -154,10 +154,32 @@ const PROTOCOL_OPTIONS = [
 ];
 
 export const ReportsAnalyticsSection: React.FC = () => {
-  const { selectedStudyId } = useAuth();
+  const { currentUser, selectedStudyId } = useAuth();
   
+  const isAdmin = currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin";
+  const assignedCodes = currentUser?.assignedStudies || [];
+
+  const visibleProtocolOptions = React.useMemo(() => {
+    if (isAdmin) return PROTOCOL_OPTIONS;
+    return PROTOCOL_OPTIONS.filter((p) =>
+      assignedCodes.some(
+        (code) => p.id.includes(code) || code.includes(p.id) || p.label.includes(code)
+      )
+    );
+  }, [isAdmin, assignedCodes]);
+
   // Active selected protocol filter
   const [activeStudy, setActiveStudy] = useState<string>(selectedStudyId || "SLT-206-C118");
+
+  // Sync activeStudy if unassigned
+  React.useEffect(() => {
+    if (visibleProtocolOptions.length > 0) {
+      const exists = visibleProtocolOptions.some((p) => p.id === activeStudy || activeStudy.includes(p.id));
+      if (!exists) {
+        setActiveStudy(visibleProtocolOptions[0].id);
+      }
+    }
+  }, [visibleProtocolOptions, activeStudy]);
 
   // Scheduled Exports Database State
   const [scheduledExports, setScheduledExports] = useState<ScheduledExport[]>(INITIAL_SCHEDULED_EXPORTS);
@@ -270,7 +292,7 @@ export const ReportsAnalyticsSection: React.FC = () => {
           onChange={(e) => setActiveStudy(e.target.value)}
           className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-2xs"
         >
-          {PROTOCOL_OPTIONS.map((p) => (
+          {visibleProtocolOptions.map((p) => (
             <option key={p.id} value={p.id}>
               {p.label}
             </option>

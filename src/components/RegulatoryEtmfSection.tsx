@@ -240,10 +240,32 @@ const PROTOCOL_OPTIONS = [
 ];
 
 export const RegulatoryEtmfSection: React.FC = () => {
-  const { selectedStudyId } = useAuth();
+  const { currentUser, selectedStudyId } = useAuth();
   
+  const isAdmin = currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin";
+  const assignedCodes = currentUser?.assignedStudies || [];
+
+  const visibleProtocolOptions = React.useMemo(() => {
+    if (isAdmin) return PROTOCOL_OPTIONS;
+    return PROTOCOL_OPTIONS.filter((p) =>
+      assignedCodes.some(
+        (code) => p.id.includes(code) || code.includes(p.id) || p.label.includes(code)
+      )
+    );
+  }, [isAdmin, assignedCodes]);
+
   // Selected protocol state
   const [activeStudy, setActiveStudy] = useState<string>(selectedStudyId || "SLT-206-C118");
+
+  // Sync activeStudy if unassigned
+  React.useEffect(() => {
+    if (visibleProtocolOptions.length > 0) {
+      const exists = visibleProtocolOptions.some((p) => p.id === activeStudy || activeStudy.includes(p.id));
+      if (!exists) {
+        setActiveStudy(visibleProtocolOptions[0].id);
+      }
+    }
+  }, [visibleProtocolOptions, activeStudy]);
 
   // Database of eTMF documents per study
   const [etmfDb, setEtmfDb] = useState<Record<string, EtmfDocument[]>>(INITIAL_ETMF_DOCUMENTS);
@@ -425,7 +447,7 @@ export const RegulatoryEtmfSection: React.FC = () => {
               onChange={(e) => setActiveStudy(e.target.value)}
               className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer pr-1"
             >
-              {PROTOCOL_OPTIONS.map((p) => (
+              {visibleProtocolOptions.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label}
                 </option>

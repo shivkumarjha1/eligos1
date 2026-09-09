@@ -5,7 +5,21 @@ import { useAuth } from "@/context/AuthContext";
 import { CheckCircle2, Download } from "lucide-react";
 
 export const TrialDashboard: React.FC = () => {
-  const { selectedStudyId } = useAuth();
+  const { currentUser, selectedStudyId, studySummaries } = useAuth();
+
+  const isAdmin = currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin";
+  const assignedCodes = currentUser?.assignedStudies || [];
+
+  const userSummaries = React.useMemo(() => {
+    if (isAdmin) return studySummaries;
+    return studySummaries.filter((s) =>
+      assignedCodes.some(
+        (code) => s.id.includes(code) || s.subtitle.includes(code) || code.includes(s.id)
+      )
+    );
+  }, [isAdmin, assignedCodes, studySummaries]);
+
+  const activeCode = selectedStudyId ? selectedStudyId.split(" ")[0] : "SLT-206-C118";
 
   const clinicalLogs = [
     {
@@ -54,7 +68,7 @@ export const TrialDashboard: React.FC = () => {
           <span>📊</span>
           <span>Selected Protocol Context:</span>
           <span className="bg-emerald-200/70 text-emerald-950 px-2.5 py-1 rounded-full font-extrabold text-xs">
-            SLT-206-C118 Cerevastatin
+            {activeCode}
           </span>
         </div>
         <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#B47418] hover:bg-[#9B6212] text-white font-bold text-xs rounded-xl shadow-xs transition">
@@ -72,7 +86,7 @@ export const TrialDashboard: React.FC = () => {
           </div>
           <div className="text-3xl font-black text-blue-600 mt-1">1</div>
           <div className="text-[11px] font-medium text-slate-500 mt-0.5">
-            Subjects screened for SLT-206-C118 Cerevastatin
+            Subjects screened for {activeCode}
           </div>
         </div>
 
@@ -113,52 +127,40 @@ export const TrialDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {/* GAD-002-NEXUS */}
-            <div className="p-3 bg-slate-50/60 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs">
-              <span className="font-extrabold text-blue-600 text-[11px]">GAD-002-NEXUS</span>
-              <span className="font-bold text-slate-700 text-[11px]">0 / 0 (0%)</span>
-            </div>
+            {userSummaries.length > 0 ? (
+              userSummaries.map((s) => {
+                const isSelected =
+                  selectedStudyId.includes(s.id) ||
+                  s.subtitle.includes(selectedStudyId.split(" ")[0]) ||
+                  selectedStudyId.split(" ")[0].includes(s.id);
 
-            {/* MHT-2101-C01 */}
-            <div className="p-3 bg-slate-50/60 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs">
-              <span className="font-extrabold text-blue-600 text-[11px]">MHT-2101-C01</span>
-              <span className="font-bold text-slate-700 text-[11px]">0 / 0 (0%)</span>
-            </div>
+                if (isSelected) {
+                  return (
+                    <div key={s.id} className="p-3.5 bg-blue-50/50 rounded-xl border-2 border-blue-400 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-emerald-700 text-[11px]">{s.title || s.subtitle || s.id}</span>
+                        <span className="text-slate-700 text-[11px]">{s.enrolled} / {s.target} ({s.percentage}%)</span>
+                      </div>
+                      <button className="w-full py-1.5 bg-white border border-blue-300 hover:bg-blue-50 text-blue-700 font-bold text-[10px] rounded-lg shadow-2xs flex items-center justify-center gap-1.5 transition">
+                        <Download className="w-3 h-3" />
+                        Export {s.id} Excel
+                      </button>
+                    </div>
+                  );
+                }
 
-            {/* SCZ-005-APOLLO */}
-            <div className="p-3 bg-slate-50/60 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs">
-              <span className="font-extrabold text-blue-600 text-[11px]">SCZ-005-APOLLO</span>
-              <span className="font-bold text-slate-700 text-[11px]">0 / 0 (0%)</span>
-            </div>
-
-            {/* SLT-206-C118 Cerevastatin (Active Highlight Box) */}
-            <div className="p-3.5 bg-blue-50/50 rounded-xl border-2 border-blue-400 space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-emerald-700 text-[11px]">SLT-206-C118 Cerevastatin</span>
-                <span className="text-slate-700 text-[11px]">0 / 0 (0%)</span>
+                return (
+                  <div key={s.id} className="p-3 bg-slate-50/60 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-blue-600 text-[11px]">{s.id}</span>
+                    <span className="font-bold text-slate-700 text-[11px]">{s.enrolled} / {s.target} ({s.percentage}%)</span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center text-xs text-slate-400 font-medium">
+                No active study protocols currently assigned by Admin.
               </div>
-              <button className="w-full py-1.5 bg-white border border-blue-300 hover:bg-blue-50 text-blue-700 font-bold text-[10px] rounded-lg shadow-2xs flex items-center justify-center gap-1.5 transition">
-                <Download className="w-3 h-3" />
-                Export SLT-206-C118 Cerevastatin Excel
-              </button>
-            </div>
-
-            {/* TEST DEMO STUDY */}
-            <div className="p-3 bg-slate-50/60 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-slate-800 text-[11px]">TEST DEMO STUDY</span>
-                <span className="bg-blue-100 text-blue-800 text-[9px] font-bold px-1.5 py-0.5 rounded">
-                  TEST-001-DEMO
-                </span>
-              </div>
-              <span className="font-bold text-slate-700 text-[11px]">0 / 100 (0%)</span>
-            </div>
-
-            {/* XPF-010-BS01 */}
-            <div className="p-3 bg-slate-50/60 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs">
-              <span className="font-extrabold text-blue-600 text-[11px]">XPF-010-BS01</span>
-              <span className="font-bold text-slate-700 text-[11px]">0 / 0 (0%)</span>
-            </div>
+            )}
           </div>
         </div>
 
@@ -179,10 +181,10 @@ export const TrialDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Column 3: RECENT CLINICAL LOGS (SLT-206-C118 CEREVASTATIN) */}
+        {/* Column 3: RECENT CLINICAL LOGS */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs space-y-4">
           <div className="text-xs font-black text-slate-500 uppercase tracking-wider">
-            RECENT CLINICAL LOGS (SLT-206-C118 CEREVASTATIN)
+            RECENT CLINICAL LOGS ({activeCode.toUpperCase()})
           </div>
 
           <div className="space-y-4 text-xs">

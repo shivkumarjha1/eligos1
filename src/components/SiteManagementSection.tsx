@@ -159,10 +159,32 @@ const PROTOCOL_OPTIONS = [
 ];
 
 export const SiteManagementSection: React.FC = () => {
-  const { selectedStudyId } = useAuth();
+  const { currentUser, selectedStudyId } = useAuth();
   
+  const isAdmin = currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin";
+  const assignedCodes = currentUser?.assignedStudies || [];
+
+  const visibleProtocolOptions = React.useMemo(() => {
+    if (isAdmin) return PROTOCOL_OPTIONS;
+    return PROTOCOL_OPTIONS.filter((p) =>
+      assignedCodes.some(
+        (code) => p.id.includes(code) || code.includes(p.id) || p.label.includes(code)
+      )
+    );
+  }, [isAdmin, assignedCodes]);
+
   // Selected protocol state
   const [activeStudyId, setActiveStudyId] = useState<string>(selectedStudyId || "SLT-206-C118");
+
+  // Sync activeStudyId if current study is unassigned
+  React.useEffect(() => {
+    if (visibleProtocolOptions.length > 0) {
+      const exists = visibleProtocolOptions.some((p) => p.id === activeStudyId || activeStudyId.includes(p.id));
+      if (!exists) {
+        setActiveStudyId(visibleProtocolOptions[0].id);
+      }
+    }
+  }, [visibleProtocolOptions, activeStudyId]);
 
   // Database of sites per study protocol
   const [sitesDatabase, setSitesDatabase] = useState<Record<string, SiteRecord[]>>(INITIAL_SITES_DATABASE);
@@ -501,7 +523,7 @@ export const SiteManagementSection: React.FC = () => {
               onChange={(e) => setActiveStudyId(e.target.value)}
               className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer pr-1"
             >
-              {PROTOCOL_OPTIONS.map((p) => (
+              {visibleProtocolOptions.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label}
                 </option>
