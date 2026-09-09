@@ -72,17 +72,19 @@ export const RandomizationSection: React.FC = () => {
           onChange={(e) => setSelectedStudyId(e.target.value)}
           className="px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-extrabold text-slate-800 focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs max-w-full"
         >
-          <option value="MHT-2101-C01 — MYOGUARD-1 Phase III">
-            MHT-2101-C01 · MYOGUARD-1 Phase III
-          </option>
-          <option value="SLT-206-C118 Cerevastatin — Cerevastatin in I">
-            SLT-206-C118 Cerevastatin — Cerevastatin in I
-          </option>
-          {studySummaries.map((s) => (
-            <option key={s.id} value={s.subtitle}>
-              {s.subtitle}
-            </option>
-          ))}
+          {studySummaries
+            .filter((s) =>
+              currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin"
+                ? true
+                : (currentUser?.assignedStudies || []).some(
+                    (code) => s.id.includes(code) || s.subtitle.includes(code) || code.includes(s.id)
+                  )
+            )
+            .map((s) => (
+              <option key={s.id} value={s.subtitle}>
+                {s.subtitle}
+              </option>
+            ))}
         </select>
       </div>
 

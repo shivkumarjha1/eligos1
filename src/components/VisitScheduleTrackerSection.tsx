@@ -16,7 +16,7 @@ interface AssessmentRow {
 }
 
 export const VisitScheduleTrackerSection: React.FC = () => {
-  const { selectedStudyId, setSelectedStudyId, studySummaries } = useAuth();
+  const { currentUser, selectedStudyId, setSelectedStudyId, studySummaries } = useAuth();
   const [selectedSubjectId, setSelectedSubjectId] = useState("100-101SLT");
 
   const visitsList = [
@@ -256,17 +256,19 @@ export const VisitScheduleTrackerSection: React.FC = () => {
               onChange={(e) => setSelectedStudyId(e.target.value)}
               className="px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs max-w-full"
             >
-              <option value="SLT-206-C118 Cerevastatin ()">
-                SLT-206-C118 Cerevastatin ()
-              </option>
-              <option value="MHT-2101-C01 — MYOGUARD-1 Phase III">
-                MHT-2101-C01 — MYOGUARD-1 Phase III
-              </option>
-              {studySummaries.map((s) => (
-                <option key={s.id} value={s.subtitle}>
-                  {s.subtitle}
-                </option>
-              ))}
+              {studySummaries
+                .filter((s) =>
+                  currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin"
+                    ? true
+                    : (currentUser?.assignedStudies || []).some(
+                        (code) => s.id.includes(code) || s.subtitle.includes(code) || code.includes(s.id)
+                      )
+                )
+                .map((s) => (
+                  <option key={s.id} value={s.subtitle}>
+                    {s.subtitle}
+                  </option>
+                ))}
             </select>
           </div>
 

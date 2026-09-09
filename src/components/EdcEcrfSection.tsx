@@ -100,7 +100,7 @@ const INITIAL_VISITS: VisitLogItem[] = [
 ];
 
 export const EdcEcrfSection: React.FC = () => {
-  const { selectedStudyId, setSelectedStudyId, studySummaries } = useAuth();
+  const { currentUser, selectedStudyId, setSelectedStudyId, studySummaries } = useAuth();
   
   const [selectedSubjectId, setSelectedSubjectId] = useState("100-101SLT");
   const [visits, setVisits] = useState<VisitLogItem[]>(INITIAL_VISITS);
@@ -195,15 +195,19 @@ export const EdcEcrfSection: React.FC = () => {
             onChange={(e) => setSelectedStudyId(e.target.value)}
             className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-full"
           >
-            <option value="SLT-206-C118 Cerevastatin — Cerevastatin in Depressive Episodes">
-              SLT-206-C118 Cerevastatin — Cerevastatin in Depressive Episodes
-            </option>
-            <option value="MHT-2101-C01 — MYOGUARD-1 Phase III">
-              MHT-2101-C01 — MYOGUARD-1 Phase III
-            </option>
-            <option value="ZP-010-BS01 (ZEPHYR Phase III)">
-              ZP-010-BS01 (ZEPHYR Phase III)
-            </option>
+            {studySummaries
+              .filter((s) =>
+                currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin"
+                  ? true
+                  : (currentUser?.assignedStudies || []).some(
+                      (code) => s.id.includes(code) || s.subtitle.includes(code) || code.includes(s.id)
+                    )
+              )
+              .map((s) => (
+                <option key={s.id} value={s.subtitle}>
+                  {s.subtitle}
+                </option>
+              ))}
           </select>
         </div>
 

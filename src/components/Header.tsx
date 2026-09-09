@@ -9,6 +9,18 @@ export const Header: React.FC<{ onOpenAddUser?: () => void; onLogout?: () => voi
 }) => {
   const { currentUser, selectedStudyId, setSelectedStudyId, studySummaries } = useAuth();
 
+  const isAdmin = currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin";
+  const assignedCodes = currentUser?.assignedStudies || [];
+
+  const visibleStudySummaries = React.useMemo(() => {
+    if (isAdmin) return studySummaries;
+    return studySummaries.filter((s) =>
+      assignedCodes.some(
+        (code) => s.id.includes(code) || s.subtitle.includes(code) || code.includes(s.id)
+      )
+    );
+  }, [isAdmin, assignedCodes, studySummaries]);
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30 px-6 py-2.5 flex items-center justify-between shadow-2xs">
       {/* Left Logo */}
@@ -33,10 +45,7 @@ export const Header: React.FC<{ onOpenAddUser?: () => void; onLogout?: () => voi
           onChange={(e) => setSelectedStudyId(e.target.value)}
           className="appearance-none bg-white border border-gray-300 hover:border-gray-400 font-bold text-xs text-gray-800 rounded-lg px-3.5 py-1.5 pr-8 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs cursor-pointer max-w-full"
         >
-          <option value="SLT-206-C118 Cerevastatin — Cerevastatin in I">
-            SLT-206-C118 Cerevastatin — Cerevastatin in I
-          </option>
-          {studySummaries.map((s) => (
+          {visibleStudySummaries.map((s) => (
             <option key={s.id} value={s.subtitle}>
               {s.subtitle}
             </option>

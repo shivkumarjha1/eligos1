@@ -286,6 +286,22 @@ export const EligibilityReviewSection: React.FC = () => {
   const canCROApprove = isCRO || isAdmin;
   const canSponsorApprove = isSponsor || isAdmin;
 
+  const assignedCodes = currentUser?.assignedStudies || [];
+
+  const availableStudyOptions = React.useMemo(() => {
+    const all = [
+      { id: "SLT-206-C118", label: "SLT-206-C118 — Cerevastatin Phase III" },
+      { id: "MHT-2101-C01", label: "MHT-2101-C01 — MYOGUARD-1 Phase III" },
+      { id: "ZP-010-BS01", label: "ZP-010-BS01 — ZEPHYR Phase III" },
+    ];
+    if (isAdmin) return all;
+    return all.filter((s) =>
+      assignedCodes.some(
+        (code) => s.id.includes(code) || code.includes(s.id) || s.label.includes(code)
+      )
+    );
+  }, [isAdmin, assignedCodes]);
+
   // Sync activeStudyId with selectedStudyId from AuthContext
   React.useEffect(() => {
     if (selectedStudyId) {
@@ -302,8 +318,29 @@ export const EligibilityReviewSection: React.FC = () => {
     }
   }, [selectedStudyId]);
 
-  // Filter available subjects based on active study selector (handling codes and full titles)
+  // Auto-switch activeStudyId if current study is not assigned to non-admin user
+  React.useEffect(() => {
+    if (availableStudyOptions.length > 0) {
+      const exists = availableStudyOptions.some(
+        (s) => s.id === activeStudyId || activeStudyId.includes(s.id)
+      );
+      if (!exists) {
+        setActiveStudyId(availableStudyOptions[0].id);
+        setModalStudyId(availableStudyOptions[0].id);
+      }
+    }
+  }, [availableStudyOptions, activeStudyId]);
+
+  // Filter available subjects based on active study selector AND user study assignment
   const availableSubjects = React.useMemo(() => {
+    const isStudyAssigned =
+      isAdmin ||
+      assignedCodes.some(
+        (code) => activeStudyId.includes(code) || code.includes(activeStudyId.split(" ")[0])
+      );
+
+    if (!isStudyAssigned) return [];
+
     const studyCode = activeStudyId.split(" ")[0];
     const directArr = subjectsRegistry[activeStudyId] || subjectsRegistry[studyCode] || [];
 
@@ -319,7 +356,7 @@ export const EligibilityReviewSection: React.FC = () => {
     });
 
     return [...directArr, ...extraSubjects];
-  }, [subjectsRegistry, activeStudyId]);
+  }, [subjectsRegistry, activeStudyId, isAdmin, assignedCodes]);
 
   // Auto-sync reviews with availableSubjects if a subject is missing from reviews
   React.useEffect(() => {
@@ -747,9 +784,11 @@ export const EligibilityReviewSection: React.FC = () => {
               onChange={(e) => handleStudyChange(e.target.value)}
               className="w-full px-4 py-2.5 bg-blue-50/70 border border-blue-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-full"
             >
-              <option value="MHT-2101-C01">MHT-2101-C01 — MYOGUARD-1 Phase III</option>
-              <option value="SLT-206-C118">SLT-206-C118 — Cerevastatin Phase III</option>
-              <option value="ZP-010-BS01">ZP-010-BS01 — ZEPHYR Phase III</option>
+              {availableStudyOptions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -1408,9 +1447,11 @@ export const EligibilityReviewSection: React.FC = () => {
                     }}
                     className="w-full px-3 py-2 bg-blue-50/80 border border-blue-300 rounded-xl text-xs font-extrabold text-slate-900 max-w-full"
                   >
-                    <option value="MHT-2101-C01">MHT-2101-C01 (MYOGUARD-1 Phase III)</option>
-                    <option value="SLT-206-C118">SLT-206-C118 (Cerevastatin Phase III)</option>
-                    <option value="ZP-010-BS01">ZP-010-BS01 (ZEPHYR Phase III)</option>
+                    {availableStudyOptions.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

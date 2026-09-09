@@ -200,8 +200,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [selectedStudyId]);
 
+  // Enforce study assignment scope for non-admin current users
+  React.useEffect(() => {
+    if (currentUser && currentUser.role !== "SuperAdmin" && currentUser.role !== "Admin") {
+      const assigned = currentUser.assignedStudies || [];
+      if (assigned.length > 0) {
+        const isCurrentSelectedAssigned = assigned.some(
+          (code) => selectedStudyId.includes(code) || code.includes(selectedStudyId.split(" ")[0])
+        );
+        if (!isCurrentSelectedAssigned) {
+          const firstAssigned = assigned[0];
+          const matchedSummary = studySummaries.find(
+            (s) => s.id.includes(firstAssigned) || s.subtitle.includes(firstAssigned)
+          );
+          setSelectedStudyId(matchedSummary ? matchedSummary.subtitle : firstAssigned);
+        }
+      }
+    }
+  }, [currentUser, selectedStudyId, studySummaries]);
+
   const switchRole = (role: UserRole) => {
-    if (role === "PI") setCurrentUser(PI_USER);
+    const userInState = users.find((u) => u.role === role);
+    if (userInState) {
+      setCurrentUser(userInState);
+    } else if (role === "PI") setCurrentUser(PI_USER);
     else if (role === "CRO") setCurrentUser(CRO_USER);
     else if (role === "Sponsor") setCurrentUser(SPONSOR_USER);
     else setCurrentUser(ADMIN_USER);
@@ -212,13 +234,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (found) {
       setCurrentUser(found);
     } else if (email.includes("pi")) {
-      setCurrentUser(PI_USER);
+      const piInState = users.find((u) => u.role === "PI");
+      setCurrentUser(piInState || PI_USER);
     } else if (email.includes("cro") || email.includes("synapse") || email.includes("reynolds")) {
-      setCurrentUser(CRO_USER);
+      const croInState = users.find((u) => u.role === "CRO");
+      setCurrentUser(croInState || CRO_USER);
     } else if (email.includes("sponsor") || email.includes("meridian")) {
-      setCurrentUser(SPONSOR_USER);
+      const sponsorInState = users.find((u) => u.role === "Sponsor");
+      setCurrentUser(sponsorInState || SPONSOR_USER);
     } else {
-      setCurrentUser(ADMIN_USER);
+      const adminInState = users.find((u) => u.role === "SuperAdmin" || u.role === "Admin");
+      setCurrentUser(adminInState || ADMIN_USER);
     }
   };
 
@@ -231,9 +257,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUser = (uid: string, updates: Partial<UserProfile>) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.uid === uid ? { ...u, ...updates } : u))
-    );
+    setUsers((prev) => {
+      const updatedList = prev.map((u) => (u.uid === uid ? { ...u, ...updates } : u));
+      return updatedList;
+    });
     if (currentUser?.uid === uid) {
       setCurrentUser((prev) => (prev ? { ...prev, ...updates } : null));
     }

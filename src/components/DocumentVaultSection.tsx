@@ -244,14 +244,19 @@ export const DocumentVaultSection: React.FC = () => {
             className="px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs max-w-xs"
           >
             <option value="All Assigned Studies">📋 All Assigned Studies</option>
-            <option value="SLT-206-C118 Cerevastatin">SLT-206-C118 Cerevastatin</option>
-            <option value="MHT-2101-C01">MHT-2101-C01 MYOGUARD-1</option>
-            <option value="ZP-010-BS01">ZP-010-BS01 ZEPHYR</option>
-            {studySummaries.map((s) => (
-              <option key={s.id} value={s.subtitle}>
-                {s.subtitle}
-              </option>
-            ))}
+            {studySummaries
+              .filter((s) =>
+                currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin"
+                  ? true
+                  : (currentUser?.assignedStudies || []).some(
+                      (code) => s.id.includes(code) || s.subtitle.includes(code) || code.includes(s.id)
+                    )
+              )
+              .map((s) => (
+                <option key={s.id} value={s.subtitle}>
+                  {s.subtitle}
+                </option>
+              ))}
           </select>
         </div>
 

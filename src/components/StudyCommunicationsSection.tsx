@@ -982,12 +982,19 @@ export const StudyCommunicationsSection: React.FC = () => {
                     onChange={(e) => setComposeStudy(e.target.value)}
                     className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs bg-white font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 max-w-full"
                   >
-                    <option value="SLT-206-C118">SLT-206-C118 Cerevastatin</option>
-                    {studySummaries.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.id} — {s.title}
-                      </option>
-                    ))}
+                    {studySummaries
+                      .filter((s) =>
+                        currentUser?.role === "SuperAdmin" || currentUser?.role === "Admin"
+                          ? true
+                          : (currentUser?.assignedStudies || []).some(
+                              (code) => s.id.includes(code) || s.subtitle.includes(code) || code.includes(s.id)
+                            )
+                      )
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.id} — {s.title}
+                        </option>
+                      ))}
                   </select>
                 </div>
 

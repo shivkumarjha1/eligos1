@@ -105,8 +105,23 @@ export const SubjectRegistrySection: React.FC = () => {
     }
   }, [subjects]);
   
+  // User role & assigned studies scope
+  const role = currentUser?.role || "PI";
+  const isAdmin = role === "SuperAdmin" || role === "Admin";
+  const canRegisterSubject = role === "PI" || isAdmin;
+  const assignedCodes = currentUser?.assignedStudies || [];
+
+  const availableStudies = React.useMemo(() => {
+    if (isAdmin) return studySummaries;
+    return studySummaries.filter((s) =>
+      assignedCodes.some(
+        (code) => s.id.includes(code) || s.subtitle.includes(code) || code.includes(s.id)
+      )
+    );
+  }, [isAdmin, assignedCodes, studySummaries]);
+
   // Selected protocol filter state
-  const [selectedProtocolFilter, setSelectedProtocolFilter] = useState("MHT-2101-C01 — MYOGUARD-1 Phase III");
+  const [selectedProtocolFilter, setSelectedProtocolFilter] = useState("SLT-206-C118 — Cerevastatin Phase III");
   
   // Search & filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,20 +130,37 @@ export const SubjectRegistrySection: React.FC = () => {
 
   // Modal state
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [modalStudy, setModalStudy] = useState("MHT-2101-C01 — MYOGUARD-1 Phase III");
+  const [modalStudy, setModalStudy] = useState("SLT-206-C118 — Cerevastatin Phase III");
   const [modalSubjectId, setModalSubjectId] = useState("");
   const [modalAge, setModalAge] = useState("35");
   const [modalSex, setModalSex] = useState("F");
-  const [modalDiagnosis, setModalDiagnosis] = useState("Voss-Kellerman Congenital Myopathy (VKCM)");
+  const [modalDiagnosis, setModalDiagnosis] = useState("Bipolar I Disorder (ICD-10 F31.9)");
   const [modalSite, setModalSite] = useState("HomeSite");
   const [modalStatus, setModalStatus] = useState<"ELIGIBLE" | "SCREENED" | "IN REVIEW" | "RANDOMIZED">("ELIGIBLE");
 
-  // Permission check: Registration allowed ONLY for PI and Admin
-  const role = currentUser?.role || "PI";
-  const canRegisterSubject = role === "PI" || role === "SuperAdmin" || role === "Admin";
+  // Auto-sync selectedProtocolFilter with available studies
+  React.useEffect(() => {
+    if (availableStudies.length > 0) {
+      const exists = availableStudies.some((s) =>
+        s.subtitle.includes(selectedProtocolFilter) || selectedProtocolFilter.includes(s.id)
+      );
+      if (!exists) {
+        setSelectedProtocolFilter(availableStudies[0].subtitle);
+        setModalStudy(availableStudies[0].subtitle);
+      }
+    }
+  }, [availableStudies, selectedProtocolFilter]);
 
-  // Filter subjects based on selected protocol, search query, status, site
+  // Filter subjects based on assigned studies, selected protocol, search query, status, site
   const filteredSubjects = subjects.filter((s) => {
+    const isStudyAssigned =
+      isAdmin ||
+      assignedCodes.some(
+        (code) => s.studyId.includes(code) || s.studyTitle.includes(code) || code.includes(s.studyId)
+      );
+
+    if (!isStudyAssigned) return false;
+
     const matchesProtocol =
       !selectedProtocolFilter ||
       s.studyTitle.toLowerCase().includes(selectedProtocolFilter.toLowerCase()) ||
@@ -263,15 +295,11 @@ export const SubjectRegistrySection: React.FC = () => {
             onChange={(e) => setSelectedProtocolFilter(e.target.value)}
             className="w-full px-4 py-3 bg-[#EBF3FE]/70 border border-blue-200 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-blue-500 cursor-pointer max-w-full"
           >
-            <option value="MHT-2101-C01 — MYOGUARD-1 Phase III">
-              MHT-2101-C01 — MYOGUARD-1 Phase III
-            </option>
-            <option value="SLT-206-C118 Cerevastatin — Cerevastatin in I">
-              SLT-206-C118 Cerevastatin — Cerevastatin in I
-            </option>
-            <option value="ZP-010-BS01 (ZEPHYR Phase III)">
-              ZP-010-BS01 (ZEPHYR Phase III)
-            </option>
+            {availableStudies.map((s) => (
+              <option key={s.id} value={s.subtitle}>
+                {s.subtitle}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -418,15 +446,11 @@ export const SubjectRegistrySection: React.FC = () => {
                   }}
                   className="w-full px-3.5 py-2.5 bg-blue-50/70 border border-blue-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-blue-500 max-w-full"
                 >
-                  <option value="MHT-2101-C01 — MYOGUARD-1 Phase III">
-                    MHT-2101-C01 — MYOGUARD-1 Phase III
-                  </option>
-                  <option value="SLT-206-C118 Cerevastatin — Cerevastatin in I">
-                    SLT-206-C118 Cerevastatin — Cerevastatin in I
-                  </option>
-                  <option value="ZP-010-BS01 (ZEPHYR Phase III)">
-                    ZP-010-BS01 (ZEPHYR Phase III)
-                  </option>
+                  {availableStudies.map((s) => (
+                    <option key={s.id} value={s.subtitle}>
+                      {s.subtitle}
+                    </option>
+                  ))}
                 </select>
               </div>
 
