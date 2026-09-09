@@ -167,20 +167,53 @@ export const EligibilityReviewSection: React.FC = () => {
   const [activeStudyId, setActiveStudyId] = useState<string>(selectedStudyId || "MHT-2101-C01");
   const [activeSubjectId, setActiveSubjectId] = useState<string>("");
 
-  // Subjects Registry State (allows PI & Admin to register new ones dynamically)
-  const [subjectsRegistry, setSubjectsRegistry] = useState<Record<string, StudySubjectOption[]>>(() => {
+  // Helper to load and merge subjects from both eligos_subjects_registry and eligos_registry_subjects
+  const loadMergedRegistry = (): Record<string, StudySubjectOption[]> => {
+    let registry: Record<string, StudySubjectOption[]> = { ...STUDY_SUBJECTS_REGISTRY };
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("eligos_subjects_registry");
-      if (saved) {
+      const savedRegistry = localStorage.getItem("eligos_subjects_registry");
+      if (savedRegistry) {
         try {
-          return JSON.parse(saved);
+          registry = { ...registry, ...JSON.parse(savedRegistry) };
         } catch (e) {
           console.error("Failed to load saved subjects registry", e);
         }
       }
+
+      const savedList = localStorage.getItem("eligos_registry_subjects");
+      if (savedList) {
+        try {
+          const list: any[] = JSON.parse(savedList);
+          list.forEach((sub) => {
+            const code = sub.studyId ? sub.studyId.split(" ")[0] : (sub.studyTitle ? sub.studyTitle.split(" ")[0] : "SLT-206-C118");
+            const opt: StudySubjectOption = {
+              subjectId: sub.subjectId,
+              studyId: code,
+              ageSex: sub.ageSex || "35/F",
+              site: sub.site || "HomeSite",
+              status: sub.status || "SCREENED",
+            };
+            const currentCodeArr = registry[code] || [];
+            if (!currentCodeArr.some((o) => o.subjectId === opt.subjectId)) {
+              registry[code] = [opt, ...currentCodeArr];
+            }
+            if (sub.studyTitle && sub.studyTitle !== code) {
+              const currentTitleArr = registry[sub.studyTitle] || [];
+              if (!currentTitleArr.some((o) => o.subjectId === opt.subjectId)) {
+                registry[sub.studyTitle] = [opt, ...currentTitleArr];
+              }
+            }
+          });
+        } catch (e) {
+          console.error("Failed to merge registered subjects list", e);
+        }
+      }
     }
-    return STUDY_SUBJECTS_REGISTRY;
-  });
+    return registry;
+  };
+
+  // Subjects Registry State
+  const [subjectsRegistry, setSubjectsRegistry] = useState<Record<string, StudySubjectOption[]>>(loadMergedRegistry);
 
   // Save subjectsRegistry to localStorage on change
   React.useEffect(() => {
@@ -188,6 +221,19 @@ export const EligibilityReviewSection: React.FC = () => {
       localStorage.setItem("eligos_subjects_registry", JSON.stringify(subjectsRegistry));
     }
   }, [subjectsRegistry]);
+
+  // Listen for storage / custom subject registration events to auto-refresh subjects
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      setSubjectsRegistry(loadMergedRegistry());
+    };
+    window.addEventListener("eligos_subject_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("eligos_subject_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
 
   // View Mode: 'checklist' for PI, default 'medical_board' for CRO/Sponsor/Admin
   const [viewMode, setViewMode] = useState<"checklist" | "medical_board">(
@@ -239,8 +285,24 @@ export const EligibilityReviewSection: React.FC = () => {
   const canCROApprove = isCRO || isAdmin;
   const canSponsorApprove = isSponsor || isAdmin;
 
-  // Filter available subjects based on active study selector
-  const availableSubjects = subjectsRegistry[activeStudyId] || [];
+  // Filter available subjects based on active study selector (handling codes and full titles)
+  const availableSubjects = React.useMemo(() => {
+    const studyCode = activeStudyId.split(" ")[0];
+    const directArr = subjectsRegistry[activeStudyId] || subjectsRegistry[studyCode] || [];
+
+    const extraSubjects: StudySubjectOption[] = [];
+    Object.keys(subjectsRegistry).forEach((key) => {
+      if (key.includes(studyCode) || studyCode.includes(key.split(" ")[0])) {
+        (subjectsRegistry[key] || []).forEach((sub) => {
+          if (!directArr.some((d) => d.subjectId === sub.subjectId) && !extraSubjects.some((e) => e.subjectId === sub.subjectId)) {
+            extraSubjects.push(sub);
+          }
+        });
+      }
+    });
+
+    return [...directArr, ...extraSubjects];
+  }, [subjectsRegistry, activeStudyId]);
 
   // Active subject object metadata
   const selectedSubjectMeta = availableSubjects.find((s) => s.subjectId === activeSubjectId);
@@ -341,6 +403,33 @@ export const EligibilityReviewSection: React.FC = () => {
       ...prev,
       [modalStudyId]: [newSub, ...(prev[modalStudyId] || [])],
     }));
+
+    // Sync to eligos_registry_subjects as well so Subject List tab stays in sync
+    if (typeof window !== "undefined") {
+      try {
+        const rawList = localStorage.getItem("eligos_registry_subjects");
+        const list = rawList ? JSON.parse(rawList) : [];
+        const regObj = {
+          id: `sub-reg-${Date.now().toString().slice(-3)}`,
+          subjectId: modalSubjectId,
+          studyId: modalStudyId.split(" ")[0],
+          studyTitle: modalStudyId,
+          indication: "Active Clinical Protocol",
+          ageSex: "35/F",
+          diagnosis: "Screening Evaluation",
+          status: "IN REVIEW",
+          site: modalSiteId,
+          lastVisit: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        };
+        if (!list.some((item: any) => item.subjectId === modalSubjectId && item.studyId === modalStudyId.split(" ")[0])) {
+          localStorage.setItem("eligos_registry_subjects", JSON.stringify([regObj, ...list]));
+        }
+        window.dispatchEvent(new Event("eligos_subject_updated"));
+        window.dispatchEvent(new Event("storage"));
+      } catch (err) {
+        console.error("Failed to sync to eligos_registry_subjects", err);
+      }
+    }
 
     const result = calculateEligibility(evalCriteria);
 

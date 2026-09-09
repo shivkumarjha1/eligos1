@@ -171,7 +171,35 @@ export const SubjectRegistrySection: React.FC = () => {
       lastVisit: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     };
 
-    setSubjects([newSub, ...subjects]);
+    const updatedSubjects = [newSub, ...subjects];
+    setSubjects(updatedSubjects);
+
+    // Sync directly to eligos_subjects_registry so Eligibility Review picks it up instantly
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("eligos_subjects_registry");
+        const registry = raw ? JSON.parse(raw) : {};
+        const code = modalStudy.split(" ")[0];
+        const newOption = {
+          subjectId: modalSubjectId,
+          studyId: code,
+          ageSex: `${modalAge}/${modalSex}`,
+          site: modalSite,
+          status: modalStatus,
+        };
+
+        registry[code] = [newOption, ...(registry[code] || [])];
+        if (modalStudy !== code) {
+          registry[modalStudy] = [newOption, ...(registry[modalStudy] || [])];
+        }
+        localStorage.setItem("eligos_subjects_registry", JSON.stringify(registry));
+        window.dispatchEvent(new Event("eligos_subject_updated"));
+        window.dispatchEvent(new Event("storage"));
+      } catch (err) {
+        console.error("Failed to sync to eligos_subjects_registry", err);
+      }
+    }
+
     setShowRegisterModal(false);
     setModalSubjectId("");
   };
