@@ -14,11 +14,14 @@ import {
   Strikethrough, 
   Check, 
   X, 
-  ChevronRight 
+  ChevronRight,
+  Lock
 } from "lucide-react";
 
 export const ProtocolComplianceSection: React.FC = () => {
-  const { selectedStudyId } = useAuth();
+  const { currentUser, selectedStudyId } = useAuth();
+  const role = currentUser?.role || "PI";
+  const canUploadProtocol = role === "Sponsor" || role === "CRO" || role === "SuperAdmin" || role === "Admin";
   const [activeSubTab, setActiveSubTab] = useState<
     "specification" | "meetings" | "deviations" | "mmp" | "mdrp"
   >("specification");
@@ -125,10 +128,16 @@ export const ProtocolComplianceSection: React.FC = () => {
           <span>⚠️</span>
           <span>No Protocol PDF has been uploaded for this study. Click upload on the right to configure.</span>
         </div>
-        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-2xs transition">
-          <Upload className="w-3.5 h-3.5" />
-          Upload Protocol PDF
-        </button>
+        {canUploadProtocol ? (
+          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-2xs transition">
+            <Upload className="w-3.5 h-3.5" />
+            Upload Protocol PDF
+          </button>
+        ) : (
+          <div className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5 text-slate-400" /> Upload Restricted (Sponsor/CRO/Admin)
+          </div>
+        )}
       </div>
 
       {/* Main Tab Content */}

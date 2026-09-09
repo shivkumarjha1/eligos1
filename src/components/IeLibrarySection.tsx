@@ -458,6 +458,9 @@ export const IeLibrarySection: React.FC = () => {
     downloadAnchor.remove();
   };
 
+  const role = currentUser?.role || "PI";
+  const canUploadProtocol = role === "Sponsor" || role === "CRO" || role === "SuperAdmin" || role === "Admin";
+
   return (
     <div className="space-y-6 font-sans text-slate-800">
       {/* Top Header & Protocol Selection */}
@@ -490,12 +493,18 @@ export const IeLibrarySection: React.FC = () => {
             </select>
           </div>
 
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
-          >
-            <Upload className="w-4 h-4" /> Upload & Parse Protocol PDF
-          </button>
+          {canUploadProtocol ? (
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
+            >
+              <Upload className="w-4 h-4" /> Upload & Parse Protocol PDF
+            </button>
+          ) : (
+            <div className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-slate-400" /> Protocol Upload: Restricted to Sponsor, CRO & Admin
+            </div>
+          )}
         </div>
       </div>
 

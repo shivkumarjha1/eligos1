@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Study } from "@/types";
-import { Plus, Edit2, Trash2, X, FlaskConical } from "lucide-react";
+import { Plus, Edit2, Trash2, X, FlaskConical, Lock } from "lucide-react";
 
 export interface ExtendedStudy extends Study {
   cro?: string;
@@ -218,6 +218,9 @@ export const StudyManagementSection: React.FC = () => {
     setShowModal(false);
   };
 
+  const role = currentUser?.role || "PI";
+  const canUploadProtocol = role === "Sponsor" || role === "CRO" || role === "SuperAdmin" || role === "Admin";
+
   return (
     <div className="space-y-6 font-sans text-slate-800">
       {/* Title Header & Create Button */}
@@ -231,12 +234,18 @@ export const StudyManagementSection: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#B47418] hover:bg-[#9B6212] text-white font-extrabold text-xs rounded-xl shadow-2xs transition"
-        >
-          <Plus className="w-4 h-4" /> Create New Study
-        </button>
+        {canUploadProtocol ? (
+          <button
+            onClick={handleOpenCreateModal}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#B47418] hover:bg-[#9B6212] text-white font-extrabold text-xs rounded-xl shadow-2xs transition"
+          >
+            <Plus className="w-4 h-4" /> Create New Study
+          </button>
+        ) : (
+          <div className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200 flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5 text-slate-400" /> Protocol Creation Restricted (Sponsor/CRO/Admin)
+          </div>
+        )}
       </div>
 
       {/* 2-Column Grid of Study Cards (Screenshots 1 & 3) */}
