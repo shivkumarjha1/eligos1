@@ -69,6 +69,7 @@ const STUDY_SUBJECTS_REGISTRY: Record<string, StudySubjectOption[]> = {
     { subjectId: "101-005", studyId: "MHT-2101-C01", ageSex: "36/M", site: "Mount Sinai Site 102", status: "APPROVED" },
   ],
   "SLT-206-C118": [
+    { subjectId: "100-100", studyId: "SLT-206-C118", ageSex: "45/M", site: "HomeSite", status: "ELIGIBLE" },
     { subjectId: "101-002", studyId: "SLT-206-C118", ageSex: "42/F", site: "Johns Hopkins Site 101", status: "RANDOMIZED" },
     { subjectId: "101-005", studyId: "SLT-206-C118", ageSex: "36/M", site: "Mount Sinai Site 102", status: "IN REVIEW" },
   ],

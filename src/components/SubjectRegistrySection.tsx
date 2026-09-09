@@ -19,6 +19,18 @@ export interface RegistrySubject {
 
 const INITIAL_REGISTRY_SUBJECTS: RegistrySubject[] = [
   {
+    id: "sub-reg-100-100",
+    subjectId: "100-100",
+    studyId: "SLT-206-C118",
+    studyTitle: "SLT-206-C118 — Cerevastatin Phase III",
+    indication: "SLT-206-C118 • Bipolar I Disorder (ICD-10 F31.9)",
+    ageSex: "45/M",
+    diagnosis: "Bipolar I Disorder (ICD-10 F31.9)",
+    status: "ELIGIBLE",
+    site: "HomeSite",
+    lastVisit: "Sep 8, 2026",
+  },
+  {
     id: "sub-reg-1",
     subjectId: "100-101MHT",
     studyId: "MHT-2101-C01",
