@@ -285,6 +285,22 @@ export const EligibilityReviewSection: React.FC = () => {
   const canCROApprove = isCRO || isAdmin;
   const canSponsorApprove = isSponsor || isAdmin;
 
+  // Sync activeStudyId with selectedStudyId from AuthContext
+  React.useEffect(() => {
+    if (selectedStudyId) {
+      const code = selectedStudyId.split(" ")[0];
+      if (selectedStudyId.includes("SLT") || selectedStudyId.includes("Cerevastatin")) {
+        setActiveStudyId("SLT-206-C118");
+      } else if (selectedStudyId.includes("MHT") || selectedStudyId.includes("MYOGUARD")) {
+        setActiveStudyId("MHT-2101-C01");
+      } else if (selectedStudyId.includes("ZP") || selectedStudyId.includes("ZEPHYR")) {
+        setActiveStudyId("ZP-010-BS01");
+      } else {
+        setActiveStudyId(code || selectedStudyId);
+      }
+    }
+  }, [selectedStudyId]);
+
   // Filter available subjects based on active study selector (handling codes and full titles)
   const availableSubjects = React.useMemo(() => {
     const studyCode = activeStudyId.split(" ")[0];
@@ -304,14 +320,67 @@ export const EligibilityReviewSection: React.FC = () => {
     return [...directArr, ...extraSubjects];
   }, [subjectsRegistry, activeStudyId]);
 
+  // Auto-sync reviews with availableSubjects if a subject is missing from reviews
+  React.useEffect(() => {
+    if (availableSubjects.length > 0) {
+      setReviews((prevReviews) => {
+        let updated = false;
+        const newReviews = [...prevReviews];
+        availableSubjects.forEach((sub) => {
+          const exists = newReviews.some(
+            (r) => r.subjectId === sub.subjectId && (r.studyId === sub.studyId || sub.studyId.includes(r.studyId) || r.studyId.includes(sub.studyId))
+          );
+          if (!exists) {
+            updated = true;
+            const studyCode = sub.studyId.split(" ")[0];
+            const criteria = PROTOCOL_CRITERIA_DATABASE[studyCode] || PROTOCOL_CRITERIA_DATABASE["MHT-2101-C01"];
+            newReviews.push({
+              id: `REV-2026-${sub.subjectId.replace(/[^a-zA-Z0-9]/g, "")}`,
+              studyId: sub.studyId,
+              subjectId: sub.subjectId,
+              siteId: sub.site || "Apex Research",
+              submittedByUid: currentUser?.uid || "pi_user",
+              submittedByEmail: currentUser?.email || "pi.vance@apex-trials.org",
+              submittedByName: `${currentUser?.first || "Dr. Elena"} ${currentUser?.last || "Vance"}`,
+              submittedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+              status: sub.status === "ELIGIBLE" || sub.status === "APPROVED" ? "Approved" : "In Review",
+              piApproval: sub.status === "ELIGIBLE" || sub.status === "APPROVED" ? {
+                approved: true,
+                by: `${currentUser?.first || "Dr. Elena"} ${currentUser?.last || "Vance"} (PI)`,
+                at: new Date().toISOString().slice(0, 16).replace("T", " "),
+                comments: "Subject registered and verified."
+              } : undefined,
+              criteria: criteria,
+              overallComments: `Subject ${sub.subjectId} registered under protocol ${sub.studyId}. Eligibility review initialized.`,
+            });
+          }
+        });
+        return updated ? newReviews : prevReviews;
+      });
+    }
+  }, [availableSubjects, currentUser]);
+
   // Active subject object metadata
   const selectedSubjectMeta = availableSubjects.find((s) => s.subjectId === activeSubjectId);
 
+  // Dynamic calculation of stat counts
+  const screeningCount = availableSubjects.filter((s) => s.status === "SCREENED" || s.status === "SCREENING").length;
+  const pendingCount = availableSubjects.filter((s) => s.status === "IN REVIEW" || s.status === "PENDING REVIEW" || s.status === "PENDING").length;
+  const approvedCount = availableSubjects.filter((s) => s.status === "APPROVED" || s.status === "ELIGIBLE" || s.status === "RANDOMIZED").length;
+  const screenFailCount = availableSubjects.filter((s) => s.status === "SCREEN FAIL" || s.status === "REJECTED").length;
+
   // Filter reviews by selected study & subject
   const studyReviews = reviews.filter(
-    (r) => (r.studyId === activeStudyId || activeStudyId.includes(r.studyId)) &&
+    (r) => (r.studyId === activeStudyId || activeStudyId.includes(r.studyId) || r.studyId.includes(activeStudyId.split(" ")[0])) &&
            (!activeSubjectId || r.subjectId === activeSubjectId)
   );
+
+  // Auto-select initial review when study queue changes
+  React.useEffect(() => {
+    if (studyReviews.length > 0 && (!selectedReview || !studyReviews.some((r) => r.id === selectedReview.id))) {
+      setSelectedReview(studyReviews[0]);
+    }
+  }, [studyReviews]);
 
   // Handle Study Selection Change
   const handleStudyChange = (studyId: string) => {
@@ -622,7 +691,7 @@ export const EligibilityReviewSection: React.FC = () => {
           <div className="text-[11px] font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> SCREENING
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-1">1 <span className="text-xs font-normal text-slate-400">subject</span></div>
+          <div className="text-2xl font-black text-slate-900 mt-1">{screeningCount} <span className="text-xs font-normal text-slate-400">subjects</span></div>
         </div>
 
         <div 
@@ -634,7 +703,7 @@ export const EligibilityReviewSection: React.FC = () => {
           <div className="text-[11px] font-black text-amber-600 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> PENDING REVIEW
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-1">1 <span className="text-xs font-normal text-slate-400">subject</span></div>
+          <div className="text-2xl font-black text-slate-900 mt-1">{pendingCount} <span className="text-xs font-normal text-slate-400">subjects</span></div>
         </div>
 
         <div 
@@ -646,7 +715,7 @@ export const EligibilityReviewSection: React.FC = () => {
           <div className="text-[11px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> APPROVED
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-1">1 <span className="text-xs font-normal text-slate-400">subject</span></div>
+          <div className="text-2xl font-black text-slate-900 mt-1">{approvedCount} <span className="text-xs font-normal text-slate-400">subjects</span></div>
         </div>
 
         <div 
@@ -658,7 +727,7 @@ export const EligibilityReviewSection: React.FC = () => {
           <div className="text-[11px] font-black text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> SCREEN FAIL
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-1">1 <span className="text-xs font-normal text-slate-400">subject</span></div>
+          <div className="text-2xl font-black text-slate-900 mt-1">{screenFailCount} <span className="text-xs font-normal text-slate-400">subjects</span></div>
         </div>
       </div>
 
