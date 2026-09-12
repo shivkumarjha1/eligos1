@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { UserRole } from "@/types";
+import { UserRole, NavTabId } from "@/types";
 import { Plus, Edit2, Trash2, Download, Phone, Mail, X, Check } from "lucide-react";
 
 export interface ContactRecord {
@@ -146,7 +146,11 @@ const INITIAL_CONTACTS: ContactRecord[] = [
   },
 ];
 
-export const StudyContactsDirectorySection: React.FC = () => {
+interface StudyContactsDirectorySectionProps {
+  onNavigate?: (tab: NavTabId) => void;
+}
+
+export const StudyContactsDirectorySection: React.FC<StudyContactsDirectorySectionProps> = ({ onNavigate }) => {
   const { currentUser, selectedStudyId, setSelectedStudyId, studySummaries } = useAuth();
   
   // Persistent Contacts State
@@ -155,7 +159,10 @@ export const StudyContactsDirectorySection: React.FC = () => {
       const saved = localStorage.getItem("eligos_contacts");
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
         } catch (e) {
           console.error("Failed to load saved contacts", e);
         }
@@ -172,18 +179,27 @@ export const StudyContactsDirectorySection: React.FC = () => {
   }, [contacts]);
   
   // Toast feedback state
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastEmail, setToastEmail] = useState<string | null>(null);
 
-  const handleEmailClick = (email: string) => {
+  const handleEmailClick = (e: React.MouseEvent, email: string) => {
+    // Copy email to clipboard
     try {
-      if (navigator.clipboard) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(email);
       }
-      setToastMessage(`Copied email to clipboard: ${email}`);
-      setTimeout(() => setToastMessage(null), 4500);
-    } catch (e) {
-      console.error("Copy failed", e);
+    } catch (err) {
+      console.error("Copy failed", err);
     }
+
+    // Trigger mailto protocol directly
+    try {
+      window.location.href = `mailto:${email}`;
+    } catch (err) {
+      console.error("Mailto trigger error", err);
+    }
+
+    setToastEmail(email);
+    setTimeout(() => setToastEmail(null), 6000);
   };
 
   // Modal state
@@ -336,7 +352,7 @@ export const StudyContactsDirectorySection: React.FC = () => {
                   <td className="px-6 py-3 font-mono">
                     <a
                       href={`mailto:${c.email}`}
-                      onClick={() => handleEmailClick(c.email)}
+                      onClick={(e) => handleEmailClick(e, c.email)}
                       className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-bold underline transition group cursor-pointer"
                       title={`Click to send email to ${c.email}`}
                     >
@@ -560,10 +576,28 @@ export const StudyContactsDirectorySection: React.FC = () => {
       )}
 
       {/* Floating Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 border border-slate-700 animate-in fade-in slide-in-from-bottom-3">
-          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{toastMessage}</span>
+      {toastEmail && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white font-extrabold text-xs px-5 py-4 rounded-2xl shadow-2xl flex flex-col sm:flex-row items-start sm:items-center gap-3 border border-slate-700 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Copied: <code className="text-blue-300 font-mono font-bold">{toastEmail}</code></span>
+          </div>
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-700">
+            <a
+              href={`mailto:${toastEmail}`}
+              className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-lg transition"
+            >
+              Open Mail App
+            </a>
+            {onNavigate && (
+              <button
+                onClick={() => onNavigate("study_communications")}
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold rounded-lg transition border border-slate-600"
+              >
+                Study Communications
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

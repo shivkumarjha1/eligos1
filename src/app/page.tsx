@@ -111,7 +111,7 @@ export default function Home() {
       case "document_vault":
         return <DocumentVaultSection />;
       case "study_contacts":
-        return <StudyContactsDirectorySection />;
+        return <StudyContactsDirectorySection onNavigate={setActiveTab} />;
       case "study_management":
         return <StudyManagementSection />;
       case "site_management":
