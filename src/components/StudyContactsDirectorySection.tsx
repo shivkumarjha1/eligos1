@@ -308,12 +308,25 @@ export const StudyContactsDirectorySection: React.FC = () => {
                 <tr key={c.id} className="hover:bg-slate-50/80 transition">
                   <td className="px-6 py-3 font-extrabold text-slate-900">{c.name}</td>
                   <td className="px-6 py-3 text-slate-600 font-medium">{c.title}</td>
-                  <td className="px-6 py-3 text-slate-800 font-mono flex items-center gap-1">
-                    <Phone className="w-3 h-3 text-emerald-600" />
-                    <span>{c.phone}</span>
+                  <td className="px-6 py-3 text-slate-800 font-mono">
+                    <a
+                      href={`tel:${c.phone}`}
+                      className="inline-flex items-center gap-1 hover:text-emerald-700 transition"
+                      title={`Call ${c.phone}`}
+                    >
+                      <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                      <span>{c.phone}</span>
+                    </a>
                   </td>
-                  <td className="px-6 py-3 font-mono text-blue-700 font-medium underline">
-                    {c.email}
+                  <td className="px-6 py-3 font-mono">
+                    <a
+                      href={`mailto:${c.email}`}
+                      className="inline-flex items-center gap-1.5 text-blue-700 hover:text-blue-900 font-medium underline transition"
+                      title={`Send email to ${c.email}`}
+                    >
+                      <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span>{c.email}</span>
+                    </a>
                   </td>
                   <td className="px-6 py-3 text-slate-600 font-medium">{c.dateOn}</td>
                   <td className="px-6 py-3 font-medium">

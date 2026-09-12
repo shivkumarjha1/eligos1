@@ -84,7 +84,15 @@ export const DirectoryTable: React.FC = () => {
                     <td className="px-5 py-3 font-semibold text-gray-900">
                       {u.first} {u.last}
                     </td>
-                    <td className="px-5 py-3 text-gray-600 font-mono">{u.email}</td>
+                    <td className="px-5 py-3 text-gray-600 font-mono">
+                      <a
+                        href={`mailto:${u.email}`}
+                        className="text-blue-700 hover:text-blue-900 font-medium underline transition"
+                        title={`Send email to ${u.email}`}
+                      >
+                        {u.email}
+                      </a>
+                    </td>
                     <td className="px-5 py-3 text-gray-800 font-medium">
                       {isEditing ? (
                         <input
