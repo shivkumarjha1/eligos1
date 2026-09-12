@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { UserRole } from "@/types";
-import { Plus, Edit2, Trash2, Download, Phone, Mail, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Download, Phone, Mail, X, Check } from "lucide-react";
 
 export interface ContactRecord {
   id: string;
@@ -171,6 +171,21 @@ export const StudyContactsDirectorySection: React.FC = () => {
     }
   }, [contacts]);
   
+  // Toast feedback state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleEmailClick = (email: string) => {
+    try {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(email);
+      }
+      setToastMessage(`Copied email to clipboard: ${email}`);
+      setTimeout(() => setToastMessage(null), 4500);
+    } catch (e) {
+      console.error("Copy failed", e);
+    }
+  };
+
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [modalSection, setModalSection] = useState<"PI" | "CRO" | "Sponsor">("PI");
@@ -321,10 +336,11 @@ export const StudyContactsDirectorySection: React.FC = () => {
                   <td className="px-6 py-3 font-mono">
                     <a
                       href={`mailto:${c.email}`}
-                      className="inline-flex items-center gap-1.5 text-blue-700 hover:text-blue-900 font-medium underline transition"
-                      title={`Send email to ${c.email}`}
+                      onClick={() => handleEmailClick(c.email)}
+                      className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-bold underline transition group cursor-pointer"
+                      title={`Click to send email to ${c.email}`}
                     >
-                      <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <Mail className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform shrink-0" />
                       <span>{c.email}</span>
                     </a>
                   </td>
@@ -540,6 +556,14 @@ export const StudyContactsDirectorySection: React.FC = () => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 border border-slate-700 animate-in fade-in slide-in-from-bottom-3">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>

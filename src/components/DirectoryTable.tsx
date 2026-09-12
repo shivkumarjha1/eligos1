@@ -9,6 +9,19 @@ export const DirectoryTable: React.FC = () => {
   const { users, currentUser, updateUser } = useAuth();
   const [editingUid, setEditingUid] = useState<string | null>(null);
   const [editSite, setEditSite] = useState("");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleEmailClick = (email: string) => {
+    try {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(email);
+      }
+      setToastMessage(`Copied email to clipboard: ${email}`);
+      setTimeout(() => setToastMessage(null), 4500);
+    } catch (e) {
+      console.error("Copy failed", e);
+    }
+  };
 
   const role = currentUser?.role || "PI";
   const isAdmin = role === "SuperAdmin" || role === "Admin";
@@ -87,8 +100,9 @@ export const DirectoryTable: React.FC = () => {
                     <td className="px-5 py-3 text-gray-600 font-mono">
                       <a
                         href={`mailto:${u.email}`}
-                        className="text-blue-700 hover:text-blue-900 font-medium underline transition"
-                        title={`Send email to ${u.email}`}
+                        onClick={() => handleEmailClick(u.email)}
+                        className="text-blue-600 hover:text-blue-800 font-semibold underline transition cursor-pointer"
+                        title={`Click to send email to ${u.email}`}
                       >
                         {u.email}
                       </a>
@@ -179,6 +193,14 @@ export const DirectoryTable: React.FC = () => {
         "Sponsor",
         <Building2 className="w-4 h-4 text-amber-600" />,
         "bg-amber-50/50"
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 border border-slate-700 animate-in fade-in slide-in-from-bottom-3">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
       )}
     </div>
   );
