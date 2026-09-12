@@ -170,7 +170,15 @@ export default function Home() {
                           <td className="px-5 py-3 font-bold text-gray-900">
                             {u.first} {u.last}
                           </td>
-                          <td className="px-5 py-3 font-mono text-gray-600">{u.email}</td>
+                          <td className="px-5 py-3 font-mono text-gray-600">
+                            <a
+                              href={`mailto:${u.email}`}
+                              className="text-blue-600 hover:text-blue-800 font-semibold underline transition cursor-pointer"
+                              title={`Send email to ${u.email}`}
+                            >
+                              {u.email}
+                            </a>
+                          </td>
                           <td className="px-5 py-3 font-bold">
                             <span
                               className={`px-2.5 py-0.5 rounded-full text-[10px] ${

@@ -758,9 +758,21 @@ export const StudyCommunicationsSection: React.FC = () => {
                         </span>
                       ))}
                       {selectedThread.toEmails && (
-                        <span className="font-mono text-slate-700 text-[11px] font-semibold break-all">
-                          {selectedThread.toEmails}
-                        </span>
+                        <div className="font-mono text-[11px] font-semibold break-all flex flex-wrap gap-1">
+                          {selectedThread.toEmails.split(";").map((em, idx) => {
+                            const clean = em.trim();
+                            return (
+                              <a
+                                key={idx}
+                                href={`mailto:${clean}`}
+                                className="text-blue-600 hover:text-blue-800 underline transition cursor-pointer"
+                                title={`Send email to ${clean}`}
+                              >
+                                {clean}{idx < selectedThread.toEmails!.split(";").length - 1 ? ";" : ""}
+                              </a>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -768,7 +780,21 @@ export const StudyCommunicationsSection: React.FC = () => {
                   {selectedThread.ccRecipients && (
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-slate-500 whitespace-nowrap">Cc:</span>
-                      <span className="font-mono text-slate-600 text-[11px] text-right break-all">{selectedThread.ccRecipients}</span>
+                      <div className="font-mono text-[11px] font-semibold text-right break-all flex flex-wrap gap-1 justify-end">
+                        {selectedThread.ccRecipients.split(";").map((em, idx) => {
+                          const clean = em.trim();
+                          return (
+                            <a
+                              key={idx}
+                              href={`mailto:${clean}`}
+                              className="text-blue-600 hover:text-blue-800 underline transition cursor-pointer"
+                              title={`Send email to ${clean}`}
+                            >
+                              {clean}{idx < selectedThread.ccRecipients!.split(";").length - 1 ? ";" : ""}
+                            </a>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
