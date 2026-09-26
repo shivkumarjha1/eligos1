@@ -10,6 +10,9 @@ export default function LoginPage() {
   const { currentUser, loginAsPersona } = useAuth();
 
   const handleLoginSuccess = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("eligos_is_authenticated", "true");
+    }
     router.push("/");
   };
 

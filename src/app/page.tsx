@@ -36,7 +36,13 @@ import { ShieldCheck, UserPlus, Trash2, Edit2, Settings } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Default logged in as requested
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const savedAuth = localStorage.getItem("eligos_is_authenticated");
+      return savedAuth !== null ? savedAuth === "true" : true;
+    }
+    return true;
+  });
   const [activeTab, setActiveTab] = useState<NavTabId>("admin_dashboard");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
@@ -68,6 +74,9 @@ export default function Home() {
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("eligos_is_authenticated", "true");
+    }
     router.push("/");
   };
 
@@ -317,6 +326,9 @@ export default function Home() {
         onLogout={() => {
           setIsAuthenticated(false);
           setCurrentUser(null);
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("eligos_is_authenticated");
+          }
           router.push("/login");
         }}
       />
