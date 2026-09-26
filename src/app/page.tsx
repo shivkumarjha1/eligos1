@@ -30,15 +30,17 @@ import { DirectoryTable } from "@/components/DirectoryTable";
 import { DeviationsSection } from "@/components/DeviationsSection";
 import { LoginScreen } from "@/components/LoginScreen";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { UserProfile, NavTabId } from "@/types";
 import { ShieldCheck, UserPlus, Trash2, Edit2, Settings } from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(true); // Default logged in as requested
   const [activeTab, setActiveTab] = useState<NavTabId>("admin_dashboard");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
-  const { users, currentUser, deleteUser } = useAuth();
+  const { users, currentUser, setCurrentUser, deleteUser } = useAuth();
 
   const permissions = currentUser?.customPermissions || {};
   const isPI = currentUser?.role === "PI";
@@ -64,8 +66,13 @@ export default function Home() {
     }
   }, [currentUser, activeTab]);
 
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    router.push("/");
+  };
+
   if (!isAuthenticated) {
-    return <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />;
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
 
   const renderTabContent = () => {
@@ -307,7 +314,11 @@ export default function Home() {
           setEditingUser(null);
           setIsAddUserOpen(true);
         }}
-        onLogout={() => setIsAuthenticated(false)}
+        onLogout={() => {
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+          router.push("/login");
+        }}
       />
 
       <div className="flex-1 flex overflow-hidden">
