@@ -1,0 +1,27 @@
+{
+  "hosting": {
+    "site": "eligos1",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/login",
+        "run": {
+          "serviceId": "eligos1",
+          "region": "us-east4"
+        }
+      },
+      {
+        "source": "/login/**",
+        "run": {
+          "serviceId": "eligos1",
+          "region": "us-east4"
+        }
+      }
+    ]
+  }
+}
